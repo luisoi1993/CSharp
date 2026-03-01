@@ -1,0 +1,14 @@
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\bin\Debug\net8.0\UsoDoWhile.exe
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\bin\Debug\net8.0\UsoDoWhile.deps.json
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\bin\Debug\net8.0\UsoDoWhile.runtimeconfig.json
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\bin\Debug\net8.0\UsoDoWhile.dll
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\bin\Debug\net8.0\UsoDoWhile.pdb
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\UsoDoWhile.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\UsoDoWhile.AssemblyInfoInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\UsoDoWhile.AssemblyInfo.cs
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\UsoDoWhile.csproj.CoreCompileInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\UsoDoWhile.dll
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\refint\UsoDoWhile.dll
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\UsoDoWhile.pdb
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\UsoDoWhile.genruntimeconfig.cache
+C:\Users\luis\Documents\GitHub\CSharp\UsoDoWhile\UsoDoWhile\obj\Debug\net8.0\ref\UsoDoWhile.dll
