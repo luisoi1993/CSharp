@@ -3,8 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\UsoDoWhile\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{DA2A755B-23F4-4CC1-855A-3C4A7208AEBE}|UsoDoWhile\\UsoDoWhile.csproj|c:\\users\\luis\\documents\\github\\csharp\\usodowhile\\usodowhile\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{DA2A755B-23F4-4CC1-855A-3C4A7208AEBE}|UsoDoWhile\\UsoDoWhile.csproj|solutionrelative:usodowhile\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{678C23B3-E0C4-DEF4-6BF3-6BEC840D5E63}|UsoDoWhile\\UsoDoWhile.csproj|c:\\users\\luis\\documents\\github\\csharp\\usodowhile\\usodowhile\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{678C23B3-E0C4-DEF4-6BF3-6BEC840D5E63}|UsoDoWhile\\UsoDoWhile.csproj|solutionrelative:usodowhile\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -24,7 +24,7 @@
               "RelativeDocumentMoniker": "UsoDoWhile\\Program.cs",
               "ToolTip": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\UsoDoWhile\\UsoDoWhile\\Program.cs",
               "RelativeToolTip": "UsoDoWhile\\Program.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAcAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-01T23:25:31.903Z",
               "EditorCaption": ""

@@ -1,0 +1,15 @@
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\LanzamientoExcepciones.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\LanzamientoExcepciones.AssemblyInfoInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\LanzamientoExcepciones.AssemblyInfo.cs
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\LanzamientoExcepciones.csproj.CoreCompileInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\LanzamientoExcepciones.sourcelink.json
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\bin\Debug\net8.0\LanzamientoExcepciones.exe
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\bin\Debug\net8.0\LanzamientoExcepciones.deps.json
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\bin\Debug\net8.0\LanzamientoExcepciones.runtimeconfig.json
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\bin\Debug\net8.0\LanzamientoExcepciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\bin\Debug\net8.0\LanzamientoExcepciones.pdb
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\LanzamientoExcepciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\refint\LanzamientoExcepciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\LanzamientoExcepciones.pdb
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\LanzamientoExcepciones.genruntimeconfig.cache
+C:\Users\luis\Documents\GitHub\CSharp\LanzamientoExcepciones\LanzamientoExcepciones\obj\Debug\net8.0\ref\LanzamientoExcepciones.dll
