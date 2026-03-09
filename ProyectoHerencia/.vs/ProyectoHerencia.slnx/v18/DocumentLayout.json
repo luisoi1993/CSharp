@@ -3,8 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\ProyectoHerencia\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{4BE2F470-D638-4FF9-A577-2CCEBE954823}|ProyectoHerencia\\ProyectoHerencia.csproj|c:\\users\\luis\\documents\\github\\csharp\\proyectoherencia\\proyectoherencia\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4BE2F470-D638-4FF9-A577-2CCEBE954823}|ProyectoHerencia\\ProyectoHerencia.csproj|solutionrelative:proyectoherencia\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{10506138-8923-68AE-F3A0-7FE6DA080C77}|ProyectoHerencia\\ProyectoHerencia.csproj|c:\\users\\luis\\documents\\github\\csharp\\proyectoherencia\\proyectoherencia\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{10506138-8923-68AE-F3A0-7FE6DA080C77}|ProyectoHerencia\\ProyectoHerencia.csproj|solutionrelative:proyectoherencia\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -24,7 +24,7 @@
               "RelativeDocumentMoniker": "ProyectoHerencia\\Program.cs",
               "ToolTip": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\ProyectoHerencia\\ProyectoHerencia\\Program.cs",
               "RelativeToolTip": "ProyectoHerencia\\Program.cs",
-              "ViewState": "AgIAABsAAAAAAAAAAAAAADEAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAMAAAAAAAAAAAAAAAMgAAABOAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-03-04T14:42:25.701Z",
               "EditorCaption": ""

@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>EjercicioHerencia</id>
+    <version>1.0.0</version>
+    <authors>EjercicioHerencia</authors>
+    <description>Package Description</description>
+    <repository type="git" commit="1fd60c5b9420d84343c02b681d4aacbacdb48f79" />
+    <dependencies>
+      <group targetFramework="net8.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Users\luis\Documents\GitHub\CSharp\EjercicioHerencia\EjercicioHerencia\bin\Debug\net8.0\EjercicioHerencia.runtimeconfig.json" target="lib\net8.0\EjercicioHerencia.runtimeconfig.json" />
+    <file src="C:\Users\luis\Documents\GitHub\CSharp\EjercicioHerencia\EjercicioHerencia\bin\Debug\net8.0\EjercicioHerencia.dll" target="lib\net8.0\EjercicioHerencia.dll" />
+  </files>
+</package>

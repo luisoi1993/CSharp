@@ -1,0 +1,15 @@
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\GenericosRestricciones.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\GenericosRestricciones.AssemblyInfoInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\GenericosRestricciones.AssemblyInfo.cs
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\GenericosRestricciones.csproj.CoreCompileInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\GenericosRestricciones.sourcelink.json
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\bin\Debug\net8.0\GenericosRestricciones.exe
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\bin\Debug\net8.0\GenericosRestricciones.deps.json
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\bin\Debug\net8.0\GenericosRestricciones.runtimeconfig.json
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\bin\Debug\net8.0\GenericosRestricciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\bin\Debug\net8.0\GenericosRestricciones.pdb
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\GenericosRestricciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\refint\GenericosRestricciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\GenericosRestricciones.pdb
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\GenericosRestricciones.genruntimeconfig.cache
+C:\Users\luis\Documents\GitHub\CSharp\GenericosRestricciones\GenericosRestricciones\obj\Debug\net8.0\ref\GenericosRestricciones.dll

@@ -1,0 +1,15 @@
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\bin\Debug\net8.0\Colecciones.exe
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\bin\Debug\net8.0\Colecciones.deps.json
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\bin\Debug\net8.0\Colecciones.runtimeconfig.json
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\bin\Debug\net8.0\Colecciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\bin\Debug\net8.0\Colecciones.pdb
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\Colecciones.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\Colecciones.AssemblyInfoInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\Colecciones.AssemblyInfo.cs
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\Colecciones.csproj.CoreCompileInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\Colecciones.sourcelink.json
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\Colecciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\refint\Colecciones.dll
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\Colecciones.pdb
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\Colecciones.genruntimeconfig.cache
+C:\Users\luis\Documents\GitHub\CSharp\Colecciones\Colecciones\obj\Debug\net8.0\ref\Colecciones.dll

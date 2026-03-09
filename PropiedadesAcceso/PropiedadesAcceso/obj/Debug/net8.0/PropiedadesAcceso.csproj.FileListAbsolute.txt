@@ -1,0 +1,15 @@
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\PropiedadesAcceso.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\PropiedadesAcceso.AssemblyInfoInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\PropiedadesAcceso.AssemblyInfo.cs
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\PropiedadesAcceso.csproj.CoreCompileInputs.cache
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\PropiedadesAcceso.sourcelink.json
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\bin\Debug\net8.0\PropiedadesAcceso.exe
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\bin\Debug\net8.0\PropiedadesAcceso.deps.json
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\bin\Debug\net8.0\PropiedadesAcceso.runtimeconfig.json
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\bin\Debug\net8.0\PropiedadesAcceso.dll
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\bin\Debug\net8.0\PropiedadesAcceso.pdb
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\PropiedadesAcceso.dll
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\refint\PropiedadesAcceso.dll
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\PropiedadesAcceso.pdb
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\PropiedadesAcceso.genruntimeconfig.cache
+C:\Users\luis\Documents\GitHub\CSharp\PropiedadesAcceso\PropiedadesAcceso\obj\Debug\net8.0\ref\PropiedadesAcceso.dll
