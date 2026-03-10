@@ -1,0 +1,53 @@
+﻿<Window x:Class="ComboBox_CheckBox.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ComboBox_CheckBox"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="350"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0">
+
+            <ComboBox Name="Capitales">
+
+                <ComboBox.ItemTemplate>
+
+                    <DataTemplate>
+
+                        <StackPanel Orientation="Horizontal">
+
+                            <TextBlock Text="{Binding NombreCapital}" FontSize="16"></TextBlock> 
+                            
+                        </StackPanel>
+                    </DataTemplate>
+                    
+                </ComboBox.ItemTemplate>
+                
+            </ComboBox>
+            
+            
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Margin="100">
+            <Label FontSize="16" FontWeight="ExtraBlack">Paises</Label>
+            <CheckBox Name="TodasC" IsThreeState="True" Checked="TodasC_Checked" Unchecked="TodasC_Unchecked">Agregar Todas</CheckBox>
+
+            <StackPanel Margin="15">
+                <CheckBox Name="Madrid" Checked="IndividualChecked" Unchecked="IndividualNoChecked">Madrid</CheckBox>
+                <CheckBox Name="Paris" Checked="IndividualChecked"  Unchecked="IndividualNoChecked">Paris</CheckBox>
+                <CheckBox Name="Berlin" Checked="IndividualChecked"  Unchecked="IndividualNoChecked">Berlin</CheckBox>
+                <CheckBox Name="Tokio" Checked="IndividualChecked"  Unchecked="IndividualNoChecked">Tokio</CheckBox>
+
+            </StackPanel>
+                    
+        </StackPanel>
+        
+    </Grid>
+</Window>

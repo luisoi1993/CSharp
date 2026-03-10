@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "RadioButtonPractica/1.0.0": {
+        "runtime": {
+          "RadioButtonPractica.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "RadioButtonPractica/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
