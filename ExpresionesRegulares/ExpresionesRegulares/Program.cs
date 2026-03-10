@@ -7,9 +7,9 @@ namespace ExpresionesRegulares
     {
         static void Main(string[] args)
         {
-            string frase = "Mi nombre es Juan y mi nº de tfno es (+34)123-45-67 y mi código postal es 29679";
+            string frase = "Mi nombre es Juan y mi nº de tfno es (+34)123-45-67 , (+44)234-54-56 y mi código postal es 29679";
 
-            string patron = @"\d{3}-";
+            string patron = @"\+34 |\+44";
 
             Regex miRegex = new Regex(patron);
 

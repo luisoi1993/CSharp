@@ -1,0 +1,53 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\Primera_Interfaz\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{10B26B6B-32DC-45A0-8A96-32A801EA722D}|Primera_Interfaz\\Primera_Interfaz.csproj|c:\\users\\luis\\documents\\github\\csharp\\primera_interfaz\\primera_interfaz\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{10B26B6B-32DC-45A0-8A96-32A801EA722D}|Primera_Interfaz\\Primera_Interfaz.csproj|solutionrelative:primera_interfaz\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{10B26B6B-32DC-45A0-8A96-32A801EA722D}|Primera_Interfaz\\Primera_Interfaz.csproj|c:\\users\\luis\\documents\\github\\csharp\\primera_interfaz\\primera_interfaz\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{10B26B6B-32DC-45A0-8A96-32A801EA722D}|Primera_Interfaz\\Primera_Interfaz.csproj|solutionrelative:primera_interfaz\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\Primera_Interfaz\\Primera_Interfaz\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "Primera_Interfaz\\MainWindow.xaml",
+              "ToolTip": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\Primera_Interfaz\\Primera_Interfaz\\MainWindow.xaml",
+              "RelativeToolTip": "Primera_Interfaz\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-03-09T11:50:41.878Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\Primera_Interfaz\\Primera_Interfaz\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Primera_Interfaz\\MainWindow.xaml.cs",
+              "ToolTip": "C:\\Users\\luis\\Documents\\GitHub\\CSharp\\Primera_Interfaz\\Primera_Interfaz\\MainWindow.xaml.cs",
+              "RelativeToolTip": "Primera_Interfaz\\MainWindow.xaml.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAAAswFAAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-09T11:50:41.11Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
