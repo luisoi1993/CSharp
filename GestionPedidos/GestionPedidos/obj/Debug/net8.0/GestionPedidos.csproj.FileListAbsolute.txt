@@ -1,0 +1,15 @@
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\GestionPedidos.GeneratedMSBuildEditorConfig.editorconfig
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\GestionPedidos.AssemblyInfoInputs.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\GestionPedidos.AssemblyInfo.cs
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\GestionPedidos.csproj.CoreCompileInputs.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\GestionPedidos.sourcelink.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\bin\Debug\net8.0\GestionPedidos.exe
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\bin\Debug\net8.0\GestionPedidos.deps.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\bin\Debug\net8.0\GestionPedidos.runtimeconfig.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\bin\Debug\net8.0\GestionPedidos.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\bin\Debug\net8.0\GestionPedidos.pdb
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\GestionPedidos.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\refint\GestionPedidos.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\GestionPedidos.pdb
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\GestionPedidos.genruntimeconfig.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\GestionPedidos\GestionPedidos\obj\Debug\net8.0\ref\GestionPedidos.dll

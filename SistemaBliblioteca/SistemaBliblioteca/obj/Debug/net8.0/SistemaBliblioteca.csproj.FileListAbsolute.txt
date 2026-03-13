@@ -1,0 +1,15 @@
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\bin\Debug\net8.0\SistemaBliblioteca.exe
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\bin\Debug\net8.0\SistemaBliblioteca.deps.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\bin\Debug\net8.0\SistemaBliblioteca.runtimeconfig.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\bin\Debug\net8.0\SistemaBliblioteca.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\bin\Debug\net8.0\SistemaBliblioteca.pdb
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\SistemaBliblioteca.GeneratedMSBuildEditorConfig.editorconfig
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\SistemaBliblioteca.AssemblyInfoInputs.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\SistemaBliblioteca.AssemblyInfo.cs
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\SistemaBliblioteca.csproj.CoreCompileInputs.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\SistemaBliblioteca.sourcelink.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\SistemaBliblioteca.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\refint\SistemaBliblioteca.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\SistemaBliblioteca.pdb
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\SistemaBliblioteca.genruntimeconfig.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\SistemaBliblioteca\SistemaBliblioteca\obj\Debug\net8.0\ref\SistemaBliblioteca.dll
