@@ -1,0 +1,15 @@
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\bin\Debug\net8.0\Trabajo_con_LINQ.exe
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\bin\Debug\net8.0\Trabajo_con_LINQ.deps.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\bin\Debug\net8.0\Trabajo_con_LINQ.runtimeconfig.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\bin\Debug\net8.0\Trabajo_con_LINQ.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\bin\Debug\net8.0\Trabajo_con_LINQ.pdb
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\Trabajo_con_LINQ.GeneratedMSBuildEditorConfig.editorconfig
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\Trabajo_con_LINQ.AssemblyInfoInputs.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\Trabajo_con_LINQ.AssemblyInfo.cs
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\Trabajo_con_LINQ.csproj.CoreCompileInputs.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\Trabajo_con_LINQ.sourcelink.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\Trabajo_con_LINQ.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\refint\Trabajo_con_LINQ.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\Trabajo_con_LINQ.pdb
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\Trabajo_con_LINQ.genruntimeconfig.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\Trabajo_con_LINQ\Trabajo_con_LINQ\obj\Debug\net8.0\ref\Trabajo_con_LINQ.dll
