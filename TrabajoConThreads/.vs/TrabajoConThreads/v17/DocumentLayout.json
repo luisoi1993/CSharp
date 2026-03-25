@@ -1,10 +1,10 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Trabajo_con_LINQ\\",
+  "WorkspaceRootPath": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\TrabajoConThreads\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{7968A249-7EBE-40AA-8637-02AE4FE2BA61}|Trabajo_con_LINQ\\Trabajo_con_LINQ.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\trabajo_con_linq\\trabajo_con_linq\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{7968A249-7EBE-40AA-8637-02AE4FE2BA61}|Trabajo_con_LINQ\\Trabajo_con_LINQ.csproj|solutionrelative:trabajo_con_linq\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{EC0D222A-000D-46FA-9ECF-9BD6E5107E68}|TrabajoConThreads\\TrabajoConThreads.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\trabajoconthreads\\trabajoconthreads\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EC0D222A-000D-46FA-9ECF-9BD6E5107E68}|TrabajoConThreads\\TrabajoConThreads.csproj|solutionrelative:trabajoconthreads\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -13,7 +13,7 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 155,
+          "DockedWidth": 713,
           "SelectedChildIndex": 30,
           "Children": [
             {
@@ -140,19 +140,19 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Program.cs",
-              "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Trabajo_con_LINQ\\Trabajo_con_LINQ\\Program.cs",
-              "RelativeDocumentMoniker": "Trabajo_con_LINQ\\Program.cs",
-              "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Trabajo_con_LINQ\\Trabajo_con_LINQ\\Program.cs",
-              "RelativeToolTip": "Trabajo_con_LINQ\\Program.cs",
-              "ViewState": "AgIAAB8AAAAAAAAAAAAgwDwAAAAAAAAAAAAAAA==",
+              "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\TrabajoConThreads\\TrabajoConThreads\\Program.cs",
+              "RelativeDocumentMoniker": "TrabajoConThreads\\Program.cs",
+              "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\TrabajoConThreads\\TrabajoConThreads\\Program.cs",
+              "RelativeToolTip": "TrabajoConThreads\\Program.cs",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAEwGYAAAAhAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-13T11:35:32.292Z",
+              "WhenOpened": "2026-03-25T14:05:11.444Z",
               "EditorCaption": ""
             }
           ]
         },
         {
-          "DockedWidth": 880,
+          "DockedWidth": 322,
           "SelectedChildIndex": -1,
           "Children": [
             {

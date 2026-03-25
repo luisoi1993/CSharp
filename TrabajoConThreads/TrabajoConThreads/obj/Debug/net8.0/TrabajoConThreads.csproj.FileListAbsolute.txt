@@ -1,0 +1,15 @@
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\bin\Debug\net8.0\TrabajoConThreads.exe
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\bin\Debug\net8.0\TrabajoConThreads.deps.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\bin\Debug\net8.0\TrabajoConThreads.runtimeconfig.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\bin\Debug\net8.0\TrabajoConThreads.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\bin\Debug\net8.0\TrabajoConThreads.pdb
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\TrabajoConThreads.GeneratedMSBuildEditorConfig.editorconfig
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\TrabajoConThreads.AssemblyInfoInputs.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\TrabajoConThreads.AssemblyInfo.cs
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\TrabajoConThreads.csproj.CoreCompileInputs.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\TrabajoConThreads.sourcelink.json
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\TrabajoConThreads.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\refint\TrabajoConThreads.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\TrabajoConThreads.pdb
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\TrabajoConThreads.genruntimeconfig.cache
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\TrabajoConThreads\TrabajoConThreads\obj\Debug\net8.0\ref\TrabajoConThreads.dll

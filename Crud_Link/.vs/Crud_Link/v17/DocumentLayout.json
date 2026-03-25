@@ -1,10 +1,14 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Trabajo_con_LINQ\\",
+  "WorkspaceRootPath": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Crud_Link\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{7968A249-7EBE-40AA-8637-02AE4FE2BA61}|Trabajo_con_LINQ\\Trabajo_con_LINQ.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\trabajo_con_linq\\trabajo_con_linq\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{7968A249-7EBE-40AA-8637-02AE4FE2BA61}|Trabajo_con_LINQ\\Trabajo_con_LINQ.csproj|solutionrelative:trabajo_con_linq\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{5DF369C1-F878-4A36-845F-9C421BB81609}|Crud_Link\\Crud_Link.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\crud_link\\crud_link\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "RelativeMoniker": "D:0:0:{5DF369C1-F878-4A36-845F-9C421BB81609}|Crud_Link\\Crud_Link.csproj|solutionrelative:crud_link\\mainwindow.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5DF369C1-F878-4A36-845F-9C421BB81609}|Crud_Link\\Crud_Link.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\crud_link\\crud_link\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{5DF369C1-F878-4A36-845F-9C421BB81609}|Crud_Link\\Crud_Link.csproj|solutionrelative:crud_link\\mainwindow.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -139,14 +143,26 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Trabajo_con_LINQ\\Trabajo_con_LINQ\\Program.cs",
-              "RelativeDocumentMoniker": "Trabajo_con_LINQ\\Program.cs",
-              "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Trabajo_con_LINQ\\Trabajo_con_LINQ\\Program.cs",
-              "RelativeToolTip": "Trabajo_con_LINQ\\Program.cs",
-              "ViewState": "AgIAAB8AAAAAAAAAAAAgwDwAAAAAAAAAAAAAAA==",
+              "Title": "MainWindow.xaml",
+              "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Crud_Link\\Crud_Link\\MainWindow.xaml",
+              "RelativeDocumentMoniker": "Crud_Link\\MainWindow.xaml",
+              "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Crud_Link\\Crud_Link\\MainWindow.xaml",
+              "RelativeToolTip": "Crud_Link\\MainWindow.xaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2026-03-23T12:20:09.782Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainWindow.xaml.cs",
+              "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Crud_Link\\Crud_Link\\MainWindow.xaml.cs",
+              "RelativeDocumentMoniker": "Crud_Link\\MainWindow.xaml.cs",
+              "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\Crud_Link\\Crud_Link\\MainWindow.xaml.cs",
+              "RelativeToolTip": "Crud_Link\\MainWindow.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-03-13T11:35:32.292Z",
+              "WhenOpened": "2026-03-23T12:20:08.28Z",
               "EditorCaption": ""
             }
           ]
