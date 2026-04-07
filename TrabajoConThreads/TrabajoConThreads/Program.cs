@@ -88,6 +88,8 @@ namespace TrabajoConThreads
             hilo3.Start();
             */
 
+            /*
+
             for(int i = 0; i < 500; i++)
             {
               //  Thread t = new Thread(EjecutarTarea);
@@ -96,10 +98,56 @@ namespace TrabajoConThreads
                 ThreadPool.QueueUserWorkItem(EjecutarTarea,i);
             }
 
+            */
+
+            /*
+
+            Task tarea = new Task(EjecutarTareaDos);
+
+            tarea.Start();
+            */
+            Task tarea = Task.Run(() => EjecutarTareaDos());
+            Task tarea2 = tarea.ContinueWith((EjecutarOtraTarea));
+
+            /*
+            Task tarea2 = new Task(() =>
+            {
+                for (int i = 0; i < 100; i++)
+                {
+                    var miThread = Thread.CurrentThread.ManagedThreadId;
+                    Console.WriteLine($"Thread nº: {miThread} ha comenzado su tarea {i}");
+                    Thread.Sleep(1000); // Simula una tarea que tarda 1 segundo
+                    Console.WriteLine($"Esta vuelta de bucle corresponde al Thread hilo:" + miThread + "Ejecutandose de4sde el main");
+                }
+            });
+
+            tarea2.Start();
+            */
             Console.ReadLine(); // Mantiene la consola abierta para ver los resultados
 
         }
+        static void EjecutarOtraTarea(Task obj)
+        {
+            for (int i = 0; i < 100; i++)
+            {
+                var miThread = Thread.CurrentThread.ManagedThreadId;
+                Console.WriteLine($"Thread nº: {miThread} ha comenzado su tarea {i}");
+                Thread.Sleep(1000); // Simula una tarea que tarda 1 segundo
+                Console.WriteLine($"Esta es otra tarea: Esta vuelta de bucle corresponde al Thread :" + miThread);
+            }
 
+        }
+        static void EjecutarTareaDos()
+        {
+            for (int i = 0; i < 100; i++)
+            {
+               var miThread = Thread.CurrentThread.ManagedThreadId;
+                Console.WriteLine($"Thread nº: {miThread} ha comenzado su tarea {i}");
+                Thread.Sleep(1000); // Simula una tarea que tarda 1 segundo
+                Console.WriteLine($"Esta vuelta de bucle corresponde al Thread :" + miThread);
+            }
+
+        }   
         static void EjecutarTarea(object state)
         {
             int numeroTarea = (int)state!;
