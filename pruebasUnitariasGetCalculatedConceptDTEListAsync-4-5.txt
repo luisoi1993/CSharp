@@ -1,0 +1,648 @@
+using AutoMapper;
+using IESA.TC.Invoices.V2.Infrastructure.BillConcept;
+using IESA.TC.Invoices.V2.Interfaces.BillConcept;
+using IESA.TC.Invoices.V2.Interfaces.Concept;
+using IESA.TC.Invoices.V2.Interfaces.Tax;
+using IESA.TC.Invoices.V2.Models;
+using IESA.TC.Invoices.V2.Models.DTE;
+using IESA.TC.Invoices.V2.Models.DTF;
+using IESA.TC.Invoices.V2.Models.DTO;
+using IESA.TC.NetCore.Middleware.Context.Model;
+using Libs.Data.Dto;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
+namespace IESA.TC.Invoices.V2.Tests
+{
+    public class BillConceptServiceTest
+    {
+        private readonly Mock<ILogger<BillConceptService>> _mockLogger;
+        private readonly Mock<IBillConceptRepository> _mockRepo;
+        private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<DBContext> _mockDbContext;
+        private readonly Mock<IConceptService> _mockConceptService;
+        private readonly Mock<ITaxService> _mockTaxService;
+        private readonly Mock<TCContext> _mockCredential;
+
+        private readonly BillConceptService _service;
+
+        public BillConceptServiceTest()
+        {
+            _mockLogger = new Mock<ILogger<BillConceptService>>();
+            _mockRepo = new Mock<IBillConceptRepository>();
+            _mockMapper = new Mock<IMapper>();
+            _mockDbContext = new Mock<DBContext>();
+            _mockConceptService = new Mock<IConceptService>();
+            _mockTaxService = new Mock<ITaxService>();
+            _mockCredential = new Mock<TCContext>();
+
+            _service = new BillConceptService(
+                _mockLogger.Object,
+                _mockMapper.Object,
+                _mockDbContext.Object,
+                _mockCredential.Object,
+                _mockRepo.Object,
+                null,
+                _mockConceptService.Object,
+                _mockTaxService.Object
+            );
+        }
+
+        #region GetCalculatedConceptDTEListAsync
+
+                            /*
+                     * Test unitario que verifica el comportamiento de
+                     * GetCalculatedConceptDTEListAsync cuando una factura
+                     * no tiene conceptos asociados.
+                     *
+                     * ¿Qué comprueba?
+                     * - Que el servicio busque correctamente los conceptos
+                     *   asociados a una factura mediante su InvoiceIssuedID.
+                     *
+                     * - Que, si el repositorio devuelve una lista vacía,
+                     *   el servicio no intente calcular impuestos,
+                     *   importes base ni retenciones.
+                     *
+                     * - Que el método devuelva una lista vacía correctamente
+                     *   inicializada, en lugar de devolver null o lanzar excepción.
+                     *
+                     * ¿Cómo funciona?
+                     *
+                     * 1. Se crea una factura de prueba (InvoiceIssuedDTE)
+                     *    con un InvoiceIssuedID = 1.
+                     *
+                     *    Este ID representa la factura sobre la que
+                     *    queremos buscar conceptos.
+                     *
+                     * 2. Se mockea el repositorio (_mockRepo) para simular
+                     *    que al buscar BillConcept asociados a esa factura,
+                     *    la base de datos no devuelve ningún registro:
+                     *
+                     *      data = []
+                     *
+                     *    Es decir:
+                     *    la factura existe, pero no tiene líneas/conceptos.
+                     *
+                     * 3. Se ejecuta:
+                     *
+                     *      GetCalculatedConceptDTEListAsync(...)
+                     *
+                     *    pasándole:
+                     *
+                     *      - una empresa (RepCompanyDTE)
+                     *      - un participante (ParticipantDTO)
+                     *      - la factura creada
+                     *
+                     * 4. Internamente el servicio:
+                     *
+                     *      - consulta el repositorio
+                     *      - recibe lista vacía
+                     *      - comprueba que no hay elementos
+                     *      - NO entra en CalculateBillConcepts()
+                     *      - devuelve una lista vacía
+                     *
+                     * 5. Finalmente se valida:
+                     *
+                     *      Assert.NotNull(result)
+                     *
+                     *    para comprobar que el resultado existe
+                     *    y no devuelve null.
+                     *
+                     *    y:
+                     *
+                     *      Assert.Empty(result)
+                     *
+                     *    para comprobar que la lista está vacía.
+                     *
+                     * Resultado esperado:
+                     * - No debe lanzar excepción.
+                     * - No debe devolver null.
+                     * - Debe devolver una lista vacía ([]).
+                     *
+                     * Esto garantiza que el servicio maneja correctamente
+                     * el caso base en el que una factura todavía no tiene
+                     * conceptos asociados.
+                     */
+
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithNoConcepts_ShouldReturnEmptyList()
+        {
+            
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE>()
+                });
+
+            
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        /*
+         * Verifica que cuando existen conceptos,
+         * el servicio los devuelve y ejecuta el cálculo.
+         */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithConcepts_ShouldCalculateAndReturnList()
+        {
+            
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concepts = new List<BillConceptDTE>
+            {
+                new BillConceptDTE
+                {
+                    Units = 2,
+                    Price = 100,
+                    PercentDiscount = 0,
+                    VATID = 1,
+                    Type = 0
+                }
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = concepts
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByIdAsync<TaxDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new TaxDTE { PercentTax = 21 });
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>(It.IsAny<string>()))
+                .ReturnsAsync((TaxDTE)null);
+
+            _mockConceptService
+                .Setup(c => c.GetByIdAsync<ConceptDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new ConceptDTE());
+
+            
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            
+            Assert.NotNull(result);
+            Assert.Single(result);
+            Assert.NotNull(result.First().Amount);
+        }
+
+        /*
+* Verifica cálculo de IVA correctamente
+*/
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithVAT_ShouldCalculateVATCorrectly()
+        {
+            
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concept = new BillConceptDTE
+            {
+                Units = 2,
+                Price = 50,
+                PercentDiscount = 0,
+                VATID = 1,
+                Type = 0
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE> { concept }
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByIdAsync<TaxDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new TaxDTE { PercentTax = 21, Ambit = 1 });
+
+            _mockConceptService
+                .Setup(c => c.GetByIdAsync<ConceptDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new ConceptDTE());
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>(It.IsAny<string>()))
+                .ReturnsAsync((TaxDTE)null);
+
+            
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            
+            var item = result.First();
+
+            Assert.Equal(100, item.BaseAmount);       // 2*50
+            Assert.Equal(21, item.VATPercent);
+            Assert.Equal(21, item.VATAmount);         // 100 * 21%
+        }
+
+        /*
+         * Verifica cálculo de retención
+         */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithWithholding_ShouldCalculateCorrectly()
+        {
+            
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concept = new BillConceptDTE
+            {
+                Units = 2,
+                Price = 100,
+                PercentDiscount = 0,
+                Type = 0,
+                ApplyWithholdingTax = true
+            };
+
+            var company = new RepCompanyDTE { TaxUID = "TAX-1" };
+
+            var participant = new ParticipantDTO
+            {
+                IsWithHoldingTax = true
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE> { concept }
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>("TAX-1"))
+                .ReturnsAsync(new TaxDTE { PercentTax = 15, Ambit = 1 });
+
+            _mockConceptService
+                .Setup(c => c.GetByIdAsync<ConceptDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new ConceptDTE { IsWithholdingTax = true });
+
+            
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                company,
+                participant,
+                invoice
+            );
+
+            
+            var item = result.First();
+
+            Assert.Equal(200, item.BaseAmount);
+            Assert.Equal(30, item.WithholdingAmount); // 15%
+        }
+
+        /*
+         * Verifica que se llama al repositorio correctamente
+         */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_ShouldCallRepositoryOnce()
+        {
+            
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE>()
+                });
+
+            
+            await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            
+            _mockRepo.Verify(r => r.GetPagedListAsync<BillConceptDTE>(
+                It.IsAny<BillConceptDTF>(),
+                It.IsAny<bool>()), Times.Once);
+        }
+
+                    /*
+             * Verifica que con precio null el importe base sea 0
+             */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithNullPrice_ShouldCalculateBaseAmountAsZero()
+        {
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concept = new BillConceptDTE
+            {
+                Units = 2,
+                Price = null,
+                PercentDiscount = 0,
+                VATID = 1,
+                Type = 0
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE> { concept }
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByIdAsync<TaxDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new TaxDTE { PercentTax = 21, Ambit = 1 });
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>(It.IsAny<string>()))
+                .ReturnsAsync((TaxDTE)null);
+
+            _mockConceptService
+                .Setup(c => c.GetByIdAsync<ConceptDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new ConceptDTE());
+
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            var item = result.First();
+
+            Assert.Equal(0, item.BaseAmount);
+            Assert.Equal(0, item.VATAmount);
+        }
+
+        /*
+         * Verifica que con unidades 0 el importe base sea 0
+         */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithZeroUnits_ShouldCalculateBaseAmountAsZero()
+        {
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concept = new BillConceptDTE
+            {
+                Units = 0,
+                Price = 100,
+                PercentDiscount = 0,
+                VATID = 1,
+                Type = 0
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE> { concept }
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByIdAsync<TaxDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new TaxDTE { PercentTax = 21, Ambit = 1 });
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>(It.IsAny<string>()))
+                .ReturnsAsync((TaxDTE)null);
+
+            _mockConceptService
+                .Setup(c => c.GetByIdAsync<ConceptDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new ConceptDTE());
+
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            var item = result.First();
+
+            Assert.Equal(0, item.BaseAmount);
+            Assert.Equal(0, item.VATAmount);
+            Assert.Equal(0, item.Amount);
+        }
+
+        /*
+         * Verifica que con descuento del 100% el importe base sea 0
+         */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithFullDiscount_ShouldCalculateBaseAmountAsZero()
+        {
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concept = new BillConceptDTE
+            {
+                Units = 2,
+                Price = 100,
+                PercentDiscount = 100,
+                VATID = 1,
+                Type = 0
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE> { concept }
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByIdAsync<TaxDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new TaxDTE { PercentTax = 21, Ambit = 1 });
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>(It.IsAny<string>()))
+                .ReturnsAsync((TaxDTE)null);
+
+            _mockConceptService
+                .Setup(c => c.GetByIdAsync<ConceptDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new ConceptDTE());
+
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            var item = result.First();
+
+            Assert.Equal(0, item.BaseAmount);
+            Assert.Equal(0, item.VATAmount);
+            Assert.Equal(0, item.Amount);
+        }
+
+        /*
+         * Verifica que sin VATID ni ConceptID con TaxID,
+         * no se aplica IVA
+         */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithNoVATID_ShouldNotApplyVAT()
+        {
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concept = new BillConceptDTE
+            {
+                Units = 2,
+                Price = 100,
+                PercentDiscount = 0,
+                VATID = null,
+                ConceptID = null,
+                Type = 0
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE> { concept }
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>(It.IsAny<string>()))
+                .ReturnsAsync((TaxDTE)null);
+
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            var item = result.First();
+
+            Assert.Equal(200, item.BaseAmount);
+            Assert.Equal(0, item.VATPercent);
+            Assert.Equal(0, item.VATAmount);
+        }
+
+        /*
+         * Verifica que retención no se aplica si el participante
+         * no tiene IsWithHoldingTax activo
+         */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithWithholdingButParticipantDisabled_ShouldNotApplyWithholding()
+        {
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concept = new BillConceptDTE
+            {
+                Units = 2,
+                Price = 100,
+                PercentDiscount = 0,
+                Type = 0,
+                ApplyWithholdingTax = true
+            };
+
+            var company = new RepCompanyDTE { TaxUID = "TAX-1" };
+
+            var participant = new ParticipantDTO
+            {
+                IsWithHoldingTax = false
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE> { concept }
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>("TAX-1"))
+                .ReturnsAsync(new TaxDTE { PercentTax = 15, Ambit = 1 });
+
+            _mockConceptService
+                .Setup(c => c.GetByIdAsync<ConceptDTE>(It.IsAny<long?>()))
+                .ReturnsAsync(new ConceptDTE { IsWithholdingTax = true });
+
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                company,
+                participant,
+                invoice
+            );
+
+            var item = result.First();
+
+            Assert.Equal(200, item.BaseAmount);
+            Assert.Equal(0, item.WithholdingAmount);
+        }
+
+        /*
+  * Verifica que un concepto con Type distinto de 0 (WithAmount)
+  * no se calcula
+  */
+        [Fact]
+        public async Task GetCalculatedConceptDTEListAsync_WithNonAmountType_ShouldNotCalculateAmounts()
+        {
+            var invoice = new InvoiceIssuedDTE { InvoiceIssuedID = 1 };
+
+            var concept = new BillConceptDTE
+            {
+                Units = 2,
+                Price = 100,
+                PercentDiscount = 0,
+                VATID = 1,
+                Type = 1
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<BillConceptDTE>(
+                    It.IsAny<BillConceptDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<BillConceptDTE>
+                {
+                    data = new List<BillConceptDTE> { concept }
+                });
+
+            _mockTaxService
+                .Setup(t => t.GetByUidAsync<TaxDTE>(It.IsAny<string>()))
+                .ReturnsAsync((TaxDTE)null);
+
+            var result = await _service.GetCalculatedConceptDTEListAsync(
+                new RepCompanyDTE(),
+                new ParticipantDTO(),
+                invoice
+            );
+
+            var item = result.First();
+
+            Assert.Null(item.BaseAmount);
+            Assert.Null(item.VATDTE);
+        }
+
+        #endregion
+    }
+}

@@ -1,0 +1,1216 @@
+using APS.Common.Security.Client;
+using AutoMapper;
+using IESA.Common.NetCore.Utilities.Utilities.Exceptions;
+using IESA.TC.Certificates.Client.Interfaces;
+using IESA.TC.EditorCloud.Client.Interfaces;
+using IESA.TC.Invoices.V2.Infrastructure.InvoiceIssued;
+using IESA.TC.Invoices.V2.Interfaces.AccountingEntry;
+using IESA.TC.Invoices.V2.Interfaces.BillConcept;
+using IESA.TC.Invoices.V2.Interfaces.BillIssued;
+using IESA.TC.Invoices.V2.Interfaces.BlackListPresentation;
+using IESA.TC.Invoices.V2.Interfaces.Company;
+using IESA.TC.Invoices.V2.Interfaces.ConfigurationInvoices;
+using IESA.TC.Invoices.V2.Interfaces.Contact;
+using IESA.TC.Invoices.V2.Interfaces.DraftInvoiceIssued;
+using IESA.TC.Invoices.V2.Interfaces.Exercise;
+using IESA.TC.Invoices.V2.Interfaces.Fee;
+using IESA.TC.Invoices.V2.Interfaces.InvoiceIssued;
+using IESA.TC.Invoices.V2.Interfaces.InvoiceIssuedPersonData;
+using IESA.TC.Invoices.V2.Interfaces.InvoiceTax;
+using IESA.TC.Invoices.V2.Interfaces.Participant;
+using IESA.TC.Invoices.V2.Interfaces.ParticipantPayerCondition;
+using IESA.TC.Invoices.V2.Interfaces.RecurringInvoice;
+using IESA.TC.Invoices.V2.Interfaces.SendInvoice;
+using IESA.TC.Invoices.V2.Interfaces.Serie;
+using IESA.TC.Invoices.V2.Interfaces.Tax;
+using IESA.TC.Invoices.V2.Interfaces.VerifactuSignedCheck;
+using IESA.TC.Invoices.V2.Models;
+using IESA.TC.Invoices.V2.Models.DTE;
+using IESA.TC.Invoices.V2.Models.DTO;
+using IESA.TC.Invoices.V2.Models.Request;
+using IESA.TC.InvoicingCenter.Client.Interfaces.HTTP;
+using IESA.TC.InvoicingCenter.FacturaE.Client.Interfaces;
+using IESA.TC.NetCore.DMS.Client;
+using IESA.TC.NetCore.Middleware.Context;
+using IESA.TC.NetCore.Middleware.Context.Model;
+using IESA.TC.ProcessManager.Client;
+using Libs.Data.Dto;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
+namespace IESA.TC.Invoices.V2.Tests
+{
+    public class InvoiceIssuedServiceTest
+    {
+        private readonly Mock<ILogger<InvoiceIssuedService>> _mockLogger;
+        private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<DBContext> _mockDbContext;
+        private readonly Mock<TCContext> _mockCredential;
+        private readonly Mock<IInvoiceIssuedRepository> _mockRepo;
+        private readonly Mock<IBillIssuedService> _mockBillIssuedService;
+        private readonly Mock<IConfigurationService> _mockConfigurationService;
+        private readonly Mock<IConfiguration> _mockConfiguration;
+        private readonly Mock<IContactService> _mockContactService;
+        private readonly Mock<IEditorCloudService> _mockEditorService;
+        private readonly Mock<IBillConceptService> _mockBillConceptService;
+        private readonly Mock<IParticipantService> _mockParticipantService;
+        private readonly Mock<IInvoiceIssuedPersonDataService> _mockInvoiceIssuedPersonDataService;
+        private readonly Mock<ISerieService> _mockSerieService;
+        private readonly Mock<IExerciseService> _mockExerciseService;
+        private readonly Mock<IInvoiceTaxService> _mockInvoiceTaxService;
+        private readonly Mock<IAccountingEntryService> _mockAccountingEntryService;
+        private readonly Mock<IFeeService> _mockFeeService;
+        private readonly Mock<ICompanyService> _mockCompanyService;
+        private readonly Mock<IRecurringInvoiceService> _mockRecurringInvoiceService;
+        private readonly Mock<IParticipantPayerConditionService> _mockParticipantPayerConditionService;
+        private readonly Mock<IDMSClient> _mockDmsClient;
+        private readonly Mock<ITaxService> _mockTaxService;
+        private readonly Mock<IDraftInvoiceIssuedService> _mockDraftInvoiceIssuedService;
+        private readonly Mock<IFacturaEService> _mockFacturaEService;
+        private readonly Mock<ISendInvoiceService> _mockSendInvoiceService;
+        private readonly Mock<IInvoicingCenterClientHTTP> _mockInvoicingCenterClientHTTP;
+        private readonly Mock<IBlackListPresentationService> _mockBlackListPresentationService;
+        private readonly Mock<IVerifactuSignedCheckService> _mockVerifactuSignedCheckService;
+        private readonly Mock<ISecurityUtils> _mockSecurityUtils;
+        private readonly Mock<ICertificatesClientSpcService> _mockCertificatesClientService;
+
+        private readonly InvoiceIssuedService _service;
+
+        public InvoiceIssuedServiceTest()
+        {
+            _mockLogger = new Mock<ILogger<InvoiceIssuedService>>();
+            _mockMapper = new Mock<IMapper>();
+            _mockDbContext = new Mock<DBContext>();
+            _mockCredential = new Mock<TCContext>();
+            _mockRepo = new Mock<IInvoiceIssuedRepository>();
+            _mockBillIssuedService = new Mock<IBillIssuedService>();
+            _mockConfigurationService = new Mock<IConfigurationService>();
+            _mockConfiguration = new Mock<IConfiguration>();
+            _mockContactService = new Mock<IContactService>();
+            _mockEditorService = new Mock<IEditorCloudService>();
+            _mockBillConceptService = new Mock<IBillConceptService>();
+            _mockParticipantService = new Mock<IParticipantService>();
+            _mockInvoiceIssuedPersonDataService = new Mock<IInvoiceIssuedPersonDataService>();
+            _mockSerieService = new Mock<ISerieService>();
+            _mockExerciseService = new Mock<IExerciseService>();
+            _mockInvoiceTaxService = new Mock<IInvoiceTaxService>();
+            _mockAccountingEntryService = new Mock<IAccountingEntryService>();
+            _mockFeeService = new Mock<IFeeService>();
+            _mockCompanyService = new Mock<ICompanyService>();
+            _mockRecurringInvoiceService = new Mock<IRecurringInvoiceService>();
+            _mockParticipantPayerConditionService = new Mock<IParticipantPayerConditionService>();
+            _mockDmsClient = new Mock<IDMSClient>();
+            _mockTaxService = new Mock<ITaxService>();
+            _mockDraftInvoiceIssuedService = new Mock<IDraftInvoiceIssuedService>();
+            _mockFacturaEService = new Mock<IFacturaEService>();
+            _mockSendInvoiceService = new Mock<ISendInvoiceService>();
+            _mockInvoicingCenterClientHTTP = new Mock<IInvoicingCenterClientHTTP>();
+            _mockBlackListPresentationService = new Mock<IBlackListPresentationService>();
+            _mockVerifactuSignedCheckService = new Mock<IVerifactuSignedCheckService>();
+            _mockSecurityUtils = new Mock<ISecurityUtils>();
+            _mockCertificatesClientService = new Mock<ICertificatesClientSpcService>();
+
+            _service = new InvoiceIssuedService(
+                _mockLogger.Object,
+                _mockMapper.Object,
+                _mockDbContext.Object,
+                _mockCredential.Object,
+                _mockRepo.Object,
+                _mockBillIssuedService.Object,
+                _mockConfigurationService.Object,
+                _mockConfiguration.Object,
+                _mockContactService.Object,
+                _mockEditorService.Object,
+                _mockBillConceptService.Object,
+                null, // ProcessManagement - no tiene constructor sin parámetros
+                _mockParticipantService.Object,
+                _mockInvoiceIssuedPersonDataService.Object,
+                _mockSerieService.Object,
+                _mockExerciseService.Object,
+                _mockInvoiceTaxService.Object,
+                _mockAccountingEntryService.Object,
+                _mockFeeService.Object,
+                _mockCompanyService.Object,
+                _mockRecurringInvoiceService.Object,
+                _mockParticipantPayerConditionService.Object,
+                _mockDmsClient.Object,
+                _mockTaxService.Object,
+                _mockDraftInvoiceIssuedService.Object,
+                _mockFacturaEService.Object,
+                _mockSendInvoiceService.Object,
+                _mockInvoicingCenterClientHTTP.Object,
+                _mockBlackListPresentationService.Object,
+                _mockVerifactuSignedCheckService.Object,
+                _mockSecurityUtils.Object,
+                null, // FactoryTCContextMiddleware - no tiene constructor sin parámetros
+                _mockCertificatesClientService.Object
+            );
+        }
+
+        #region GetInvoiceIssuedPropertiesAsync
+
+        /*
+         * Verifica que el método delega correctamente al repositorio
+         * y devuelve los datos sin modificarlos
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedPropertiesAsync_WithValidFilter_ShouldReturnRepositoryResult()
+        {
+            var expectedData = new ResultDataDto<InvoiceIssuedProperty>
+            {
+                data = new List<InvoiceIssuedProperty>
+                {
+                    new InvoiceIssuedProperty
+                    {
+                        InvoiceIssuedID = 1,
+                        Series = "A",
+                        InvoiceNumber = 100,
+                        TotalAmount = 500
+                    }
+                },
+                iTotalRecords = 1
+            };
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedPropertiesAsync(It.IsAny<string>()))
+                .ReturnsAsync(expectedData);
+
+            var result = await _service.GetInvoiceIssuedPropertiesAsync("?CompanyUID=test");
+
+            Assert.NotNull(result);
+            Assert.Single(result.data);
+            Assert.Equal(1, result.data.First().InvoiceIssuedID);
+            Assert.Equal("A", result.data.First().Series);
+        }
+
+        /*
+         * Verifica que sin resultados devuelve lista vacía
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedPropertiesAsync_WithNoResults_ShouldReturnEmptyList()
+        {
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedPropertiesAsync(It.IsAny<string>()))
+                .ReturnsAsync(new ResultDataDto<InvoiceIssuedProperty>
+                {
+                    data = new List<InvoiceIssuedProperty>(),
+                    iTotalRecords = 0
+                });
+
+            var result = await _service.GetInvoiceIssuedPropertiesAsync("?CompanyUID=test");
+
+            Assert.NotNull(result);
+            Assert.Empty(result.data);
+            Assert.Equal(0, result.iTotalRecords);
+        }
+
+        /*
+         * Verifica que se llama al repositorio exactamente una vez
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedPropertiesAsync_ShouldCallRepositoryOnce()
+        {
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedPropertiesAsync(It.IsAny<string>()))
+                .ReturnsAsync(new ResultDataDto<InvoiceIssuedProperty>
+                {
+                    data = new List<InvoiceIssuedProperty>()
+                });
+
+            await _service.GetInvoiceIssuedPropertiesAsync("?CompanyUID=test");
+
+            _mockRepo.Verify(r => r.GetInvoiceIssuedPropertiesAsync("?CompanyUID=test"), Times.Once);
+        }
+
+        /*
+ * Verifica que devuelve múltiples resultados correctamente
+ */
+        [Fact]
+        public async Task GetInvoiceIssuedPropertiesAsync_WithMultipleResults_ShouldReturnAll()
+        {
+            var expectedData = new ResultDataDto<InvoiceIssuedProperty>
+            {
+                data = new List<InvoiceIssuedProperty>
+                {
+                    new InvoiceIssuedProperty { InvoiceIssuedID = 1, Series = "A", InvoiceNumber = 100, TotalAmount = 500 },
+                    new InvoiceIssuedProperty { InvoiceIssuedID = 2, Series = "B", InvoiceNumber = 200, TotalAmount = 1000 },
+                    new InvoiceIssuedProperty { InvoiceIssuedID = 3, Series = "A", InvoiceNumber = 101, TotalAmount = 750 }
+                },
+                iTotalRecords = 3
+            };
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedPropertiesAsync(It.IsAny<string>()))
+                .ReturnsAsync(expectedData);
+
+            var result = await _service.GetInvoiceIssuedPropertiesAsync("?CompanyUID=test");
+
+            Assert.NotNull(result);
+            Assert.Equal(3, result.data.Count());
+            Assert.Equal(3, result.iTotalRecords);
+        }
+
+        /*
+         * Verifica que el filterstring se pasa sin modificar al repositorio
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedPropertiesAsync_ShouldPassFilterStringUnmodified()
+        {
+            string filterString = "?CompanyUID=ABC-123&offset=0&limit=10&order_by=-InvoicingDate";
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedPropertiesAsync(It.IsAny<string>()))
+                .ReturnsAsync(new ResultDataDto<InvoiceIssuedProperty>
+                {
+                    data = new List<InvoiceIssuedProperty>()
+                });
+
+            await _service.GetInvoiceIssuedPropertiesAsync(filterString);
+
+            _mockRepo.Verify(r => r.GetInvoiceIssuedPropertiesAsync(filterString), Times.Once);
+        }
+
+        /*
+         * Verifica que la paginación se refleja en el resultado
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedPropertiesAsync_WithPagination_ShouldReturnPaginatedResult()
+        {
+            var expectedData = new ResultDataDto<InvoiceIssuedProperty>
+            {
+                data = new List<InvoiceIssuedProperty>
+                {
+                    new InvoiceIssuedProperty { InvoiceIssuedID = 1, Series = "A", InvoiceNumber = 100, TotalAmount = 500 }
+                },
+                iTotalRecords = 50,
+                iPage = 2,
+                iRecords = 10
+            };
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedPropertiesAsync(It.IsAny<string>()))
+                .ReturnsAsync(expectedData);
+
+            var result = await _service.GetInvoiceIssuedPropertiesAsync("?CompanyUID=test&offset=10&limit=10");
+
+            Assert.NotNull(result);
+            Assert.Equal(50, result.iTotalRecords);
+            Assert.Equal(2, result.iPage);
+            Assert.Equal(10, result.iRecords);
+        }
+
+        #endregion
+
+        #region GetInvoiceIssuedWithPaymentBillsAsync
+
+        /*
+         * Verifica que el método delega correctamente al repositorio
+         * y devuelve los datos sin modificarlos
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedWithPaymentBillsAsync_WithValidFilter_ShouldReturnRepositoryResult()
+        {
+            var expectedData = new ResultDataDto<InvoiceIssuedWithPaymentBillDTO>
+            {
+                data = new List<InvoiceIssuedWithPaymentBillDTO>
+                {
+                    new InvoiceIssuedWithPaymentBillDTO
+                    {
+                        InvoiceIssuedID = 1,
+                        Series = "A",
+                        InvoiceNumber = 100,
+                        TotalAmount = 500,
+                        CompanyUID = "COMPANY-1",
+                        PropertyCode = 10,
+                        PropertyName = "Propiedad Test",
+                        InvoicingDate = DateTime.Now
+                    }
+                },
+                iTotalRecords = 1
+            };
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedWithPaymentBillsAsync(It.IsAny<string>()))
+                .ReturnsAsync(expectedData);
+
+            var result = await _service.GetInvoiceIssuedWithPaymentBillsAsync("?CompanyUID=COMPANY-1");
+
+            Assert.NotNull(result);
+            Assert.Single(result.data);
+            Assert.Equal(1, result.data.First().InvoiceIssuedID);
+            Assert.Equal("A", result.data.First().Series);
+            Assert.Equal(500, result.data.First().TotalAmount);
+        }
+
+        /*
+         * Verifica que sin resultados devuelve lista vacía
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedWithPaymentBillsAsync_WithNoResults_ShouldReturnEmptyList()
+        {
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedWithPaymentBillsAsync(It.IsAny<string>()))
+                .ReturnsAsync(new ResultDataDto<InvoiceIssuedWithPaymentBillDTO>
+                {
+                    data = new List<InvoiceIssuedWithPaymentBillDTO>(),
+                    iTotalRecords = 0
+                });
+
+            var result = await _service.GetInvoiceIssuedWithPaymentBillsAsync("?CompanyUID=COMPANY-1");
+
+            Assert.NotNull(result);
+            Assert.Empty(result.data);
+            Assert.Equal(0, result.iTotalRecords);
+        }
+
+        /*
+         * Verifica que se llama al repositorio exactamente una vez
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedWithPaymentBillsAsync_ShouldCallRepositoryOnce()
+        {
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedWithPaymentBillsAsync(It.IsAny<string>()))
+                .ReturnsAsync(new ResultDataDto<InvoiceIssuedWithPaymentBillDTO>
+                {
+                    data = new List<InvoiceIssuedWithPaymentBillDTO>()
+                });
+
+            await _service.GetInvoiceIssuedWithPaymentBillsAsync("?CompanyUID=COMPANY-1");
+
+            _mockRepo.Verify(r => r.GetInvoiceIssuedWithPaymentBillsAsync("?CompanyUID=COMPANY-1"), Times.Once);
+        }
+
+        /*
+ * Verifica que devuelve múltiples resultados correctamente
+ */
+        [Fact]
+        public async Task GetInvoiceIssuedWithPaymentBillsAsync_WithMultipleResults_ShouldReturnAll()
+        {
+            var expectedData = new ResultDataDto<InvoiceIssuedWithPaymentBillDTO>
+            {
+                data = new List<InvoiceIssuedWithPaymentBillDTO>
+                {
+                    new InvoiceIssuedWithPaymentBillDTO { InvoiceIssuedID = 1, Series = "A", InvoiceNumber = 100, TotalAmount = 500, CompanyUID = "COMPANY-1", PropertyCode = 10, PropertyName = "Prop 1", InvoicingDate = DateTime.Now },
+                    new InvoiceIssuedWithPaymentBillDTO { InvoiceIssuedID = 2, Series = "B", InvoiceNumber = 200, TotalAmount = 1000, CompanyUID = "COMPANY-1", PropertyCode = 20, PropertyName = "Prop 2", InvoicingDate = DateTime.Now },
+                    new InvoiceIssuedWithPaymentBillDTO { InvoiceIssuedID = 3, Series = "A", InvoiceNumber = 101, TotalAmount = 750, CompanyUID = "COMPANY-1", PropertyCode = 30, PropertyName = "Prop 3", InvoicingDate = DateTime.Now }
+                },
+                iTotalRecords = 3
+            };
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedWithPaymentBillsAsync(It.IsAny<string>()))
+                .ReturnsAsync(expectedData);
+
+            var result = await _service.GetInvoiceIssuedWithPaymentBillsAsync("?CompanyUID=COMPANY-1");
+
+            Assert.NotNull(result);
+            Assert.Equal(3, result.data.Count());
+            Assert.Equal(3, result.iTotalRecords);
+        }
+
+        /*
+         * Verifica que el filterstring se pasa sin modificar al repositorio
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedWithPaymentBillsAsync_ShouldPassFilterStringUnmodified()
+        {
+            string filterString = "?CompanyUID=ABC-123&offset=0&limit=10&order_by=-InvoicingDate";
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedWithPaymentBillsAsync(It.IsAny<string>()))
+                .ReturnsAsync(new ResultDataDto<InvoiceIssuedWithPaymentBillDTO>
+                {
+                    data = new List<InvoiceIssuedWithPaymentBillDTO>()
+                });
+
+            await _service.GetInvoiceIssuedWithPaymentBillsAsync(filterString);
+
+            _mockRepo.Verify(r => r.GetInvoiceIssuedWithPaymentBillsAsync(filterString), Times.Once);
+        }
+
+        /*
+         * Verifica que la paginación se refleja en el resultado
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedWithPaymentBillsAsync_WithPagination_ShouldReturnPaginatedResult()
+        {
+            var expectedData = new ResultDataDto<InvoiceIssuedWithPaymentBillDTO>
+            {
+                data = new List<InvoiceIssuedWithPaymentBillDTO>
+                {
+                    new InvoiceIssuedWithPaymentBillDTO { InvoiceIssuedID = 1, Series = "A", InvoiceNumber = 100, TotalAmount = 500, CompanyUID = "COMPANY-1", PropertyCode = 10, PropertyName = "Prop 1", InvoicingDate = DateTime.Now }
+                },
+                iTotalRecords = 50,
+                iPage = 2,
+                iRecords = 10
+            };
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedWithPaymentBillsAsync(It.IsAny<string>()))
+                .ReturnsAsync(expectedData);
+
+            var result = await _service.GetInvoiceIssuedWithPaymentBillsAsync("?CompanyUID=COMPANY-1&offset=10&limit=10");
+
+            Assert.NotNull(result);
+            Assert.Equal(50, result.iTotalRecords);
+            Assert.Equal(2, result.iPage);
+            Assert.Equal(10, result.iRecords);
+        }
+
+        /*
+         * Verifica que los datos del PropertyCode y PropertyName se devuelven correctamente
+         */
+        [Fact]
+        public async Task GetInvoiceIssuedWithPaymentBillsAsync_ShouldReturnPropertyData()
+        {
+            var expectedData = new ResultDataDto<InvoiceIssuedWithPaymentBillDTO>
+            {
+                data = new List<InvoiceIssuedWithPaymentBillDTO>
+                {
+                    new InvoiceIssuedWithPaymentBillDTO
+                    {
+                        InvoiceIssuedID = 1,
+                        Series = "A",
+                        InvoiceNumber = 100,
+                        TotalAmount = 1500.50m,
+                        CompanyUID = "COMPANY-1",
+                        PropertyCode = 55,
+                        PropertyName = "Comunidad Las Rosas",
+                        InvoicingDate = new DateTime(2025, 6, 15)
+                    }
+                },
+                iTotalRecords = 1
+            };
+
+            _mockRepo
+                .Setup(r => r.GetInvoiceIssuedWithPaymentBillsAsync(It.IsAny<string>()))
+                .ReturnsAsync(expectedData);
+
+            var result = await _service.GetInvoiceIssuedWithPaymentBillsAsync("?CompanyUID=COMPANY-1");
+
+            Assert.Equal(55, result.data.First().PropertyCode);
+            Assert.Equal("Comunidad Las Rosas", result.data.First().PropertyName);
+            Assert.Equal("COMPANY-1", result.data.First().CompanyUID);
+            Assert.Equal(new DateTime(2025, 6, 15), result.data.First().InvoicingDate);
+        }
+
+        #endregion
+
+
+
+        #region GetInvoicesExistenceByParticipantAsync
+
+        /*
+         * Verifica que devuelve true cuando existen facturas
+         * para el participante
+         */
+        [Fact]
+        public async Task GetInvoicesExistenceByParticipantAsync_WithInvoices_ShouldReturnTrue()
+        {
+            _mockRepo
+                .Setup(r => r.GetCountInvoicesByParticipantAsync("PARTICIPANT-1"))
+                .ReturnsAsync(5);
+
+            var result = await _service.GetInvoicesExistenceByParticipantAsync("PARTICIPANT-1");
+
+            Assert.True(result);
+        }
+
+        /*
+         * Verifica que devuelve false cuando no existen facturas
+         */
+        [Fact]
+        public async Task GetInvoicesExistenceByParticipantAsync_WithNoInvoices_ShouldReturnFalse()
+        {
+            _mockRepo
+                .Setup(r => r.GetCountInvoicesByParticipantAsync("PARTICIPANT-1"))
+                .ReturnsAsync(0);
+
+            var result = await _service.GetInvoicesExistenceByParticipantAsync("PARTICIPANT-1");
+
+            Assert.False(result);
+        }
+
+        /*
+ * Verifica que devuelve true con exactamente una factura
+ */
+        [Fact]
+        public async Task GetInvoicesExistenceByParticipantAsync_WithOneInvoice_ShouldReturnTrue()
+        {
+            _mockRepo
+                .Setup(r => r.GetCountInvoicesByParticipantAsync("PARTICIPANT-1"))
+                .ReturnsAsync(1);
+
+            var result = await _service.GetInvoicesExistenceByParticipantAsync("PARTICIPANT-1");
+
+            Assert.True(result);
+        }
+
+        /*
+         * Verifica que se llama al repositorio exactamente una vez
+         */
+        [Fact]
+        public async Task GetInvoicesExistenceByParticipantAsync_ShouldCallRepositoryOnce()
+        {
+            _mockRepo
+                .Setup(r => r.GetCountInvoicesByParticipantAsync(It.IsAny<string>()))
+                .ReturnsAsync(0);
+
+            await _service.GetInvoicesExistenceByParticipantAsync("PARTICIPANT-1");
+
+            _mockRepo.Verify(r => r.GetCountInvoicesByParticipantAsync("PARTICIPANT-1"), Times.Once);
+        }
+
+        /*
+         * Verifica que el participantUID se pasa sin modificar al repositorio
+         */
+        [Fact]
+        public async Task GetInvoicesExistenceByParticipantAsync_ShouldPassParticipantUIDUnmodified()
+        {
+            string participantUID = "UID-ABC-123-XYZ";
+
+            _mockRepo
+                .Setup(r => r.GetCountInvoicesByParticipantAsync(It.IsAny<string>()))
+                .ReturnsAsync(3);
+
+            await _service.GetInvoicesExistenceByParticipantAsync(participantUID);
+
+            _mockRepo.Verify(r => r.GetCountInvoicesByParticipantAsync(participantUID), Times.Once);
+        }
+
+        /*
+         * Verifica que devuelve true con un número alto de facturas
+         */
+        [Fact]
+        public async Task GetInvoicesExistenceByParticipantAsync_WithManyInvoices_ShouldReturnTrue()
+        {
+            _mockRepo
+                .Setup(r => r.GetCountInvoicesByParticipantAsync("PARTICIPANT-2"))
+                .ReturnsAsync(1000);
+
+            var result = await _service.GetInvoicesExistenceByParticipantAsync("PARTICIPANT-2");
+
+            Assert.True(result);
+        }
+
+        #endregion
+
+        #region GetInvoiceByIdAsync
+
+        /*
+         * Verifica que obtiene una factura por ID y la mapea a DTO
+         */
+        [Fact]
+        public async Task GetInvoiceByIdAsync_WithValidId_ShouldReturnMappedDTO()
+        {
+            var invoiceDTE = new InvoiceIssuedDTE
+            {
+                InvoiceIssuedID = 1,
+                Series = "A",
+                InvoiceNumber = 100,
+                TotalAmount = 500
+            };
+
+            var expectedDTO = new InvoiceIssuedDTO
+            {
+                InvoiceIssuedID = 1,
+                Series = "A",
+                InvoiceNumber = 100,
+                TotalAmount = 500
+            };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(invoiceDTE);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(expectedDTO);
+
+            var result = await _service.GetInvoiceByIdAsync(1);
+
+            Assert.NotNull(result);
+            Assert.Equal(1, result.InvoiceIssuedID);
+            Assert.Equal("A", result.Series);
+            Assert.Equal(100, result.InvoiceNumber);
+            Assert.Equal(500, result.TotalAmount);
+        }
+
+        /*
+         * Verifica que devuelve null si la factura no existe
+         */
+        [Fact]
+        public async Task GetInvoiceByIdAsync_WithInvalidId_ShouldReturnNull()
+        {
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync((InvoiceIssuedDTE)null);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns((InvoiceIssuedDTO)null);
+
+            var result = await _service.GetInvoiceByIdAsync(999);
+
+            Assert.Null(result);
+        }
+
+                /*
+         * Verifica que se llama al repositorio exactamente una vez
+         */
+        [Fact]
+        public async Task GetInvoiceByIdAsync_ShouldCallRepositoryOnce()
+        {
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(new InvoiceIssuedDTE());
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(new InvoiceIssuedDTO());
+
+            await _service.GetInvoiceByIdAsync(1);
+
+            _mockRepo.Verify(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()), Times.Once);
+        }
+
+        /*
+         * Verifica que se llama al mapper exactamente una vez
+         */
+        [Fact]
+        public async Task GetInvoiceByIdAsync_ShouldCallMapperOnce()
+        {
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(new InvoiceIssuedDTE());
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(new InvoiceIssuedDTO());
+
+            await _service.GetInvoiceByIdAsync(1);
+
+            _mockMapper.Verify(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()), Times.Once);
+        }
+
+        /*
+         * Verifica que devuelve todos los campos mapeados correctamente
+         */
+        [Fact]
+        public async Task GetInvoiceByIdAsync_ShouldReturnAllMappedFields()
+        {
+            var invoiceDTE = new InvoiceIssuedDTE
+            {
+                InvoiceIssuedID = 5,
+                Series = "R",
+                InvoiceNumber = 250,
+                TotalAmount = 1250.75m,
+                CompanyUID = "COMPANY-TEST",
+                ParticipantUID = "PARTICIPANT-TEST",
+                InvoiceIssuedUID = "UID-FACTURA-005"
+            };
+
+            var expectedDTO = new InvoiceIssuedDTO
+            {
+                InvoiceIssuedID = 5,
+                Series = "R",
+                InvoiceNumber = 250,
+                TotalAmount = 1250.75m,
+                CompanyUID = "COMPANY-TEST",
+                ParticipantUID = "PARTICIPANT-TEST",
+                InvoiceIssuedUID = "UID-FACTURA-005"
+            };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(invoiceDTE);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(expectedDTO);
+
+            var result = await _service.GetInvoiceByIdAsync(5);
+
+            Assert.NotNull(result);
+            Assert.Equal(5, result.InvoiceIssuedID);
+            Assert.Equal("R", result.Series);
+            Assert.Equal(250, result.InvoiceNumber);
+            Assert.Equal(1250.75m, result.TotalAmount);
+            Assert.Equal("COMPANY-TEST", result.CompanyUID);
+            Assert.Equal("PARTICIPANT-TEST", result.ParticipantUID);
+            Assert.Equal("UID-FACTURA-005", result.InvoiceIssuedUID);
+        }
+
+        #endregion
+
+        #region GetInvoiceCompletedAsync
+
+        /*
+         * Verifica que devuelve null si la factura no existe
+         */
+        [Fact]
+        public async Task GetInvoiceCompletedAsync_WithNonExistingInvoice_ShouldReturnNull()
+        {
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync((InvoiceIssuedDTE)null);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns((InvoiceIssuedDTO)null);
+
+            var result = await _service.GetInvoiceCompletedAsync(999);
+
+            Assert.Null(result);
+        }
+
+        /*
+         * Verifica que lanza excepción si el participante no existe
+         */
+        [Fact]
+        public async Task GetInvoiceCompletedAsync_WithNullParticipant_ShouldThrowException()
+        {
+            var invoiceDTE = new InvoiceIssuedDTE { InvoiceIssuedID = 1, ParticipantUID = "PART-1" };
+            var invoiceDTO = new InvoiceIssuedDTO { InvoiceIssuedID = 1, ParticipantUID = "PART-1" };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(invoiceDTE);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(invoiceDTO);
+
+            _mockParticipantService
+                .Setup(p => p.GetParticipantDTOByParticipantUIDAsync(It.IsAny<string>()))
+                .ReturnsAsync((ParticipantDTO)null);
+
+            await Assert.ThrowsAsync<IESACommonException>(() => _service.GetInvoiceCompletedAsync(1));
+        }
+
+        /*
+         * Verifica que para factura rectificativa no carga recibos
+         * IsInvoiceCorrective = true cuando CorrectiveInvoiceID > 0 y InvoiceType == Rectify
+         */
+        [Fact]
+        public async Task GetInvoiceCompletedAsync_WithCorrectiveInvoice_ShouldReturnEmptyBills()
+        {
+            var invoiceDTE = new InvoiceIssuedDTE { InvoiceIssuedID = 1, ParticipantUID = "PART-1" };
+            var invoiceDTO = new InvoiceIssuedDTO
+            {
+                InvoiceIssuedID = 1,
+                ParticipantUID = "PART-1",
+                CorrectiveInvoiceID = 99,
+                InvoiceType = 2
+            };
+            var participantDTO = new ParticipantDTO { ParticipantUID = "PART-1" };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(invoiceDTE);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(invoiceDTO);
+
+            _mockParticipantService
+                .Setup(p => p.GetParticipantDTOByParticipantUIDAsync(It.IsAny<string>()))
+                .ReturnsAsync(participantDTO);
+
+            var result = await _service.GetInvoiceCompletedAsync(1);
+
+            Assert.NotNull(result);
+            Assert.Empty(result.Bills);
+            _mockBillIssuedService.Verify(b => b.GetByInvoiceIssuedIdAsync(It.IsAny<long>()), Times.Never);
+        }
+
+        /*
+         * Verifica que lanza excepción si no hay recibos en factura normal
+         * IsInvoiceCorrective = false cuando CorrectiveInvoiceID == 0
+         */
+        [Fact]
+        public async Task GetInvoiceCompletedAsync_WithNoBills_ShouldThrowException()
+        {
+            var invoiceDTE = new InvoiceIssuedDTE { InvoiceIssuedID = 1, ParticipantUID = "PART-1" };
+            var invoiceDTO = new InvoiceIssuedDTO
+            {
+                InvoiceIssuedID = 1,
+                ParticipantUID = "PART-1",
+                CorrectiveInvoiceID = 0,
+                InvoiceType = 1
+            };
+            var participantDTO = new ParticipantDTO { ParticipantUID = "PART-1" };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(invoiceDTE);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(invoiceDTO);
+
+            _mockParticipantService
+                .Setup(p => p.GetParticipantDTOByParticipantUIDAsync(It.IsAny<string>()))
+                .ReturnsAsync(participantDTO);
+
+            _mockBillIssuedService
+                .Setup(b => b.GetByInvoiceIssuedIdAsync(It.IsAny<long>()))
+                .ReturnsAsync(new ResultDataDto<BillIssuedDTO> { data = new List<BillIssuedDTO>() });
+
+            await Assert.ThrowsAsync<IESACommonException>(() => _service.GetInvoiceCompletedAsync(1));
+        }
+
+        /*
+         * Verifica que lanza excepción si un recibo completo es null
+         */
+        [Fact]
+        public async Task GetInvoiceCompletedAsync_WithNullBillComplete_ShouldThrowException()
+        {
+            var invoiceDTE = new InvoiceIssuedDTE { InvoiceIssuedID = 1, ParticipantUID = "PART-1" };
+            var invoiceDTO = new InvoiceIssuedDTO
+            {
+                InvoiceIssuedID = 1,
+                ParticipantUID = "PART-1",
+                CorrectiveInvoiceID = 0,
+                InvoiceType = 1
+            };
+            var participantDTO = new ParticipantDTO { ParticipantUID = "PART-1" };
+            var billsList = new ResultDataDto<BillIssuedDTO>
+            {
+                data = new List<BillIssuedDTO> { new BillIssuedDTO { BillIssuedID = 10 } }
+            };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(invoiceDTE);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(invoiceDTO);
+
+            _mockParticipantService
+                .Setup(p => p.GetParticipantDTOByParticipantUIDAsync(It.IsAny<string>()))
+                .ReturnsAsync(participantDTO);
+
+            _mockBillIssuedService
+                .Setup(b => b.GetByInvoiceIssuedIdAsync(It.IsAny<long>()))
+                .ReturnsAsync(billsList);
+
+            _mockBillIssuedService
+                .Setup(b => b.GetEntityCompleteAsync(It.IsAny<long>()))
+                .ReturnsAsync((BillCompleteDTO)null);
+
+            await Assert.ThrowsAsync<IESACommonException>(() => _service.GetInvoiceCompletedAsync(1));
+        }
+
+        /*
+         * Verifica que devuelve factura completa con recibos correctamente
+         */
+        [Fact]
+        public async Task GetInvoiceCompletedAsync_WithValidData_ShouldReturnCompleteInvoice()
+        {
+            var invoiceDTE = new InvoiceIssuedDTE { InvoiceIssuedID = 1, ParticipantUID = "PART-1" };
+            var invoiceDTO = new InvoiceIssuedDTO
+            {
+                InvoiceIssuedID = 1,
+                ParticipantUID = "PART-1",
+                CorrectiveInvoiceID = 0,
+                InvoiceType = 1
+            };
+            var participantDTO = new ParticipantDTO { ParticipantUID = "PART-1" };
+            var billsList = new ResultDataDto<BillIssuedDTO>
+            {
+                data = new List<BillIssuedDTO>
+                {
+                    new BillIssuedDTO { BillIssuedID = 10 },
+                    new BillIssuedDTO { BillIssuedID = 20 }
+                }
+            };
+            var billComplete1 = new BillCompleteDTO { BillIssued = new BillIssuedDTO { BillIssuedID = 10 } };
+            var billComplete2 = new BillCompleteDTO { BillIssued = new BillIssuedDTO { BillIssuedID = 20 } };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(invoiceDTE);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(invoiceDTO);
+
+            _mockParticipantService
+                .Setup(p => p.GetParticipantDTOByParticipantUIDAsync(It.IsAny<string>()))
+                .ReturnsAsync(participantDTO);
+
+            _mockBillIssuedService
+                .Setup(b => b.GetByInvoiceIssuedIdAsync(It.IsAny<long>()))
+                .ReturnsAsync(billsList);
+
+            _mockBillIssuedService
+                .Setup(b => b.GetEntityCompleteAsync(10))
+                .ReturnsAsync(billComplete1);
+
+            _mockBillIssuedService
+                .Setup(b => b.GetEntityCompleteAsync(20))
+                .ReturnsAsync(billComplete2);
+
+            var result = await _service.GetInvoiceCompletedAsync(1);
+
+            Assert.NotNull(result);
+            Assert.Equal(1, result.InvoiceIssued.InvoiceIssuedID);
+            Assert.Equal("PART-1", result.Property.ParticipantUID);
+            Assert.Equal(2, result.Bills.Count);
+        }
+
+        /*
+         * Verifica que se llama a GetEntityCompleteAsync por cada recibo
+         */
+        [Fact]
+        public async Task GetInvoiceCompletedAsync_ShouldCallGetEntityCompleteForEachBill()
+        {
+            var invoiceDTE = new InvoiceIssuedDTE { InvoiceIssuedID = 1, ParticipantUID = "PART-1" };
+            var invoiceDTO = new InvoiceIssuedDTO
+            {
+                InvoiceIssuedID = 1,
+                ParticipantUID = "PART-1",
+                CorrectiveInvoiceID = 0,
+                InvoiceType = 1
+            };
+            var participantDTO = new ParticipantDTO { ParticipantUID = "PART-1" };
+            var billsList = new ResultDataDto<BillIssuedDTO>
+            {
+                data = new List<BillIssuedDTO>
+                {
+                    new BillIssuedDTO { BillIssuedID = 10 },
+                    new BillIssuedDTO { BillIssuedID = 20 },
+                    new BillIssuedDTO { BillIssuedID = 30 }
+                }
+            };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync(invoiceDTE);
+
+            _mockMapper
+                .Setup(m => m.Map<InvoiceIssuedDTO>(It.IsAny<InvoiceIssuedDTE>()))
+                .Returns(invoiceDTO);
+
+            _mockParticipantService
+                .Setup(p => p.GetParticipantDTOByParticipantUIDAsync(It.IsAny<string>()))
+                .ReturnsAsync(participantDTO);
+
+            _mockBillIssuedService
+                .Setup(b => b.GetByInvoiceIssuedIdAsync(It.IsAny<long>()))
+                .ReturnsAsync(billsList);
+
+            _mockBillIssuedService
+                .Setup(b => b.GetEntityCompleteAsync(It.IsAny<long>()))
+                .ReturnsAsync(new BillCompleteDTO { BillIssued = new BillIssuedDTO() });
+
+            await _service.GetInvoiceCompletedAsync(1);
+
+            _mockBillIssuedService.Verify(b => b.GetEntityCompleteAsync(It.IsAny<long>()), Times.Exactly(3));
+        }
+
+        #endregion
+
+        #region ValidateNIF
+
+        /*
+         * Verifica que un NIF null no lanza excepción
+         * (el método hace return si es null o vacío)
+         */
+        [Fact]
+        public void ValidateNIF_WithNull_ShouldNotThrow()
+        {
+            var exception = Record.Exception(() => _service.ValidateNIF(null));
+
+            Assert.Null(exception);
+        }
+
+        /*
+         * Verifica que un NIF vacío no lanza excepción
+         */
+        [Fact]
+        public void ValidateNIF_WithEmpty_ShouldNotThrow()
+        {
+            var exception = Record.Exception(() => _service.ValidateNIF(""));
+
+            Assert.Null(exception);
+        }
+
+        #endregion
+
+        #region GetNextInvoiceNumberAsync
+
+        /*
+         * Verifica que delega correctamente al repositorio
+         */
+        [Fact]
+        public async Task GetNextInvoiceNumberAsync_ShouldReturnNextNumber()
+        {
+            _mockRepo
+                .Setup(r => r.GetNextInvoiceNumberAsync("COMPANY-1", "A"))
+                .ReturnsAsync(101);
+
+            var result = await _service.GetNextInvoiceNumberAsync("COMPANY-1", "A");
+
+            Assert.Equal(101, result);
+        }
+
+        #endregion
+
+        #region UpdateContractReferenceInvoiceIssuedAsync
+
+        /*
+         * Verifica que delega la actualización al repositorio
+         */
+        [Fact]
+        public async Task UpdateContractReferenceInvoiceIssuedAsync_ShouldReturnTrue()
+        {
+            _mockRepo
+                .Setup(r => r.UpdateContractReferenceInvoiceIssuedAsync(1, "REF-001"))
+                .ReturnsAsync(true);
+
+            var result = await _service.UpdateContractReferenceInvoiceIssuedAsync(1, "REF-001");
+
+            Assert.True(result);
+        }
+
+        /*
+         * Verifica que devuelve false cuando falla
+         */
+        [Fact]
+        public async Task UpdateContractReferenceInvoiceIssuedAsync_WhenFails_ShouldReturnFalse()
+        {
+            _mockRepo
+                .Setup(r => r.UpdateContractReferenceInvoiceIssuedAsync(1, "REF-001"))
+                .ReturnsAsync(false);
+
+            var result = await _service.UpdateContractReferenceInvoiceIssuedAsync(1, "REF-001");
+
+            Assert.False(result);
+        }
+
+        #endregion
+
+        #region GetMaxInvoiceNumberByCompanySerie
+
+        /*
+         * Verifica que obtiene el máximo número de factura
+         */
+        [Fact]
+        public async Task GetMaxInvoiceNumberByCompanySerie_ShouldReturnMaxNumber()
+        {
+            var company = new RepCompanyDTE { CompanyUID = "COMPANY-1" };
+            var serie = new SerieDTE { SerieID = 1, Name = "A" };
+
+            _mockRepo
+                .Setup(r => r.GetMaxInvoiceNumberByCompanySerie(It.IsAny<RepCompanyDTE>(), It.IsAny<SerieDTE>()))
+                .ReturnsAsync(50);
+
+            var result = await _service.GetMaxInvoiceNumberByCompanySerie(company, serie);
+
+            Assert.Equal(50, result);
+        }
+
+        /*
+         * Verifica que devuelve 0 cuando no hay facturas
+         */
+        [Fact]
+        public async Task GetMaxInvoiceNumberByCompanySerie_WithNoInvoices_ShouldReturnZero()
+        {
+            var company = new RepCompanyDTE { CompanyUID = "COMPANY-1" };
+            var serie = new SerieDTE { SerieID = 1, Name = "A" };
+
+            _mockRepo
+                .Setup(r => r.GetMaxInvoiceNumberByCompanySerie(It.IsAny<RepCompanyDTE>(), It.IsAny<SerieDTE>()))
+                .ReturnsAsync(0);
+
+            var result = await _service.GetMaxInvoiceNumberByCompanySerie(company, serie);
+
+            Assert.Equal(0, result);
+        }
+
+        #endregion
+
+        #region GetCollectInvoicesToAccountingAsync
+
+        /*
+         * Verifica que devuelve la lista de facturas para contabilidad
+         */
+        [Fact]
+        public async Task GetCollectInvoicesToAccountingAsync_WithValidIds_ShouldReturnList()
+        {
+            var ids = new List<long> { 1, 2, 3 };
+            var expectedData = new List<InvoicesToAccountingDTO>
+            {
+                new InvoicesToAccountingDTO(),
+                new InvoicesToAccountingDTO()
+            };
+
+            _mockRepo
+                .Setup(r => r.GetCollectInvoicesToAccountingAsync(It.IsAny<List<long>>()))
+                .ReturnsAsync(expectedData);
+
+            var result = await _service.GetCollectInvoicesToAccountingAsync(ids);
+
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count);
+        }
+
+        /*
+         * Verifica que devuelve lista vacía sin IDs
+         */
+        [Fact]
+        public async Task GetCollectInvoicesToAccountingAsync_WithEmptyIds_ShouldReturnEmptyList()
+        {
+            var ids = new List<long>();
+
+            _mockRepo
+                .Setup(r => r.GetCollectInvoicesToAccountingAsync(It.IsAny<List<long>>()))
+                .ReturnsAsync(new List<InvoicesToAccountingDTO>());
+
+            var result = await _service.GetCollectInvoicesToAccountingAsync(ids);
+
+            Assert.NotNull(result);
+            Assert.Empty(result);
+        }
+
+        #endregion
+
+        #region UpdateBillIssuedAsync
+
+        /*
+         * Verifica que devuelve false si el DTO es null
+         */
+        [Fact]
+        public async Task UpdateBillIssuedAsync_WithNull_ShouldReturnFalse()
+        {
+            var result = await _service.UpdateBillIssuedAsync(null);
+
+            Assert.False(result);
+        }
+
+        /*
+         * Verifica que devuelve false si la factura no existe
+         */
+        [Fact]
+        public async Task UpdateBillIssuedAsync_WithNonExistingInvoice_ShouldReturnFalse()
+        {
+            var dto = new InstantInvoiceDTO { InvoiceIssuedID = 999 };
+
+            _mockRepo
+                .Setup(r => r.GetByIdAsync<InvoiceIssuedDTE>(It.IsAny<object>(), It.IsAny<bool>()))
+                .ReturnsAsync((InvoiceIssuedDTE)null);
+
+            var result = await _service.UpdateBillIssuedAsync(dto);
+
+            Assert.False(result);
+        }
+
+        #endregion
+    }
+}

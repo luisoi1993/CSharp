@@ -1,0 +1,264 @@
+GetCalculatedConceptDTEListAsync()
+│
+├── INPUT (Entrada)
+│   │
+│   ├── RepCompanyDTE companyDTE
+│   │   : Empresa emisora de la factura
+│   │
+│   │   Campos importantes:
+│   │   └── TaxUID
+│   │       : UID del impuesto/retención principal de la empresa
+│   │
+│   │   Se usa para:
+│   │   └── Obtener el impuesto de retención (withholding tax)
+│   │
+│   │
+│   ├── ParticipantDTO participantDTO
+│   │   : Cliente / participante al que se factura
+│   │
+│   │   Campo importante:
+│   │   └── IsWithHoldingTax
+│   │       : Indica si al participante se le aplica retención
+│   │
+│   │   true
+│   │   └── Se aplica retención
+│   │
+│   │   false
+│   │   └── No se aplica retención
+│   │
+│   │
+│   └── InvoiceIssuedDTE invoiceIssued
+│       : Factura emitida
+│
+│       Campo importante:
+│       └── InvoiceIssuedID
+│           : ID de la factura
+│
+│       Se usa para:
+│       └── Buscar todos sus conceptos de factura
+│
+│
+├── STEP 1 → GET CONCEPTS (Obtener conceptos)
+│   │
+│   ├── GetPagedListAsync(
+│   │       new BillConceptDTF
+│   │       {
+│   │           InvoiceIssuedID = invoiceIssued.InvoiceIssuedID
+│   │       })
+│   │
+│   │   : Busca en base de datos todos los BillConcept
+│   │     asociados a esa factura
+│   │
+│   │
+│   ├── SQL mental:
+│   │
+│   │   SELECT * FROM BillConcept
+│   │   WHERE InvoiceIssuedID = facturaID
+│   │
+│   │
+│   └── Resultado:
+│       ResultDataDto<BillConceptDTE>
+│
+│       └── data
+│           : lista de líneas de factura
+│
+│
+├── STEP 2 → CREATE EMPTY LIST (Crear lista vacía)
+│   │
+│   └── List<BillConceptDTE> billConceptDTEList = new();
+│
+│       : Inicializa lista vacía por seguridad
+│
+│       Si no hay conceptos:
+│       └── devuelve []
+│
+│       Nunca:
+│       └── null
+│
+│
+├── STEP 3 → CHECK DATA (Comprobar si hay datos)
+│   │
+│   └── if (billConceptDTEs.data.Any())
+│
+│       : Comprueba si existen conceptos
+│
+│       true
+│       └── continúa
+│
+│       false
+│       └── return []
+│
+│
+├── STEP 4 → COPY TO LIST (Copiar lista)
+│   │
+│   └── billConceptDTEList = billConceptDTEs.data.ToList();
+│
+│       : Convierte enumerable a lista editable
+│
+│
+├── STEP 5 → CALCULATE CONCEPTS (Calcular conceptos)
+│   │
+│   └── await CalculateBillConcepts(
+│           companyDTE,
+│           participantDTO,
+│           billConceptDTEList);
+│
+│       : Aquí ocurre toda la lógica fiscal
+│
+│
+│   ┌──────────────────────────────────────────────┐
+│   │ INTERNAL FLOW → CalculateBillConcepts()     │
+│   └──────────────────────────────────────────────┘
+│
+│   │
+│   ├── GET WITHHOLDING TAX
+│   │   │
+│   │   └── _taxService.GetByUidAsync(companyDTE.TaxUID)
+│   │
+│   │       : Obtiene impuesto de retención empresa
+│   │
+│   │       Ej:
+│   │       └── IRPF 15%
+│   │
+│   │
+│   ├── CHECK WITHHOLDING
+│   │   │
+│   │   └── participantDTO.IsWithHoldingTax
+│   │
+│   │       : Decide si aplica retención
+│   │
+│   │
+│   ├── LOOP CONCEPTS
+│   │   │
+│   │   └── foreach BillConceptDTE item
+│   │
+│   │
+│   ├── LOAD CONCEPT
+│   │   │
+│   │   └── _conceptService.GetByIdAsync(item.ConceptID)
+│   │
+│   │       : Obtiene concepto completo
+│   │
+│   │       Ej:
+│   │       └── "Cuota mensual"
+│   │
+│   │
+│   ├── LOAD VAT TAX
+│   │   │
+│   │   └── _taxService.GetByIdAsync(item.VATID)
+│   │
+│   │       : Obtiene IVA
+│   │
+│   │       Ej:
+│   │       └── 21%
+│   │
+│   │
+│   ├── CALCULATE BASE AMOUNT
+│   │   │
+│   │   └── BaseAmount =
+│   │       (Units * Price)
+│   │       * (1 - PercentDiscount/100)
+│   │
+│   │       Ej:
+│   │       Units = 2
+│   │       Price = 100
+│   │       Discount = 10
+│   │
+│   │       2*100 = 200
+│   │       200*(0.90) = 180
+│   │
+│   │       Resultado:
+│   │       └── BaseAmount = 180
+│   │
+│   │
+│   ├── CALCULATE VAT AMOUNT
+│   │   │
+│   │   └── VATAmount =
+│   │       BaseAmount * VATPercent / 100
+│   │
+│   │       Ej:
+│   │       180 * 21%
+│   │       = 37.80
+│   │
+│   │
+│   ├── CALCULATE WITHHOLDING AMOUNT
+│   │   │
+│   │   └── WithholdingAmount =
+│   │       BaseAmount * WithholdingPercent / 100
+│   │
+│   │       Ej:
+│   │       180 * 15%
+│   │       = 27
+│   │
+│   │
+│   ├── CALCULATE TOTAL AMOUNT
+│   │   │
+│   │   └── Amount =
+│   │       BaseAmount
+│   │       + VATAmount
+│   │       - WithholdingAmount
+│   │
+│   │       Ej:
+│   │       180 + 37.80 - 27
+│   │       = 190.80
+│   │
+│   │
+│   └── UPDATE OBJECT
+│       │
+│       ├── item.ConceptDTE
+│       │   : Concepto cargado completo
+│       │
+│       ├── item.Title
+│       │   : Título concepto
+│       │
+│       ├── item.Code
+│       │   : Código concepto
+│       │
+│       ├── item.BaseAmount
+│       │   : Base imponible
+│       │
+│       ├── item.VATDTE
+│       │   : Objeto impuesto IVA
+│       │
+│       ├── item.VATPercent
+│       │   : % IVA
+│       │
+│       ├── item.VATAmount
+│       │   : Cantidad IVA
+│       │
+│       ├── item.WithholdingDTE
+│       │   : Objeto retención
+│       │
+│       ├── item.WithholdingPercent
+│       │   : % retención
+│       │
+│       ├── item.WithholdingAmount
+│       │   : Cantidad retención
+│       │
+│       └── item.Amount
+│           : Importe final
+│
+│
+└── RETURN
+    │
+    └── List<BillConceptDTE>
+        : Lista completa de conceptos calculados
+
+        Cada item vuelve enriquecido con:
+
+        ├── ConceptDTE
+        ├── VATDTE
+        ├── WithholdingDTE
+        ├── BaseAmount
+        ├── VATAmount
+        ├── WithholdingAmount
+        └── Amount 
+		
+		
+		GetCalculatedConceptDTEListAsync
+: Busca conceptos de una factura
+: Calcula base imponible
+: Calcula IVA
+: Calcula retención
+: Calcula total final
+: Devuelve lista lista para facturar/mostrar/guardar

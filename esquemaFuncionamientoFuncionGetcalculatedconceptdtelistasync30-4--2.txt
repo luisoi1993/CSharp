@@ -1,0 +1,287 @@
+GetCalculatedConceptDTEListAsync()
+│
+├── PURPOSE (Objetivo)
+│   : Obtener todos los conceptos (BillConcept) de una factura emitida
+│   : Calcular automáticamente sus importes fiscales
+│   : Devolver la lista enriquecida y lista para mostrar / guardar / emitir factura
+│
+│   Resultado final por línea:
+│   ├── BaseAmount
+│   ├── VATPercent
+│   ├── VATAmount
+│   ├── WithholdingPercent
+│   ├── WithholdingAmount
+│   ├── Amount
+│   ├── ConceptDTE
+│   ├── VATDTE
+│   └── WithholdingDTE
+│
+│
+├── INPUT (Entrada)
+│   │
+│   ├── RepCompanyDTE companyDTE
+│   │   : Empresa emisora
+│   │
+│   │   Campo importante:
+│   │   └── TaxUID
+│   │       : UID de la retención principal de la empresa
+│   │
+│   │   Se usa para:
+│   │   └── Obtener impuesto de retención (Withholding Tax)
+│   │
+│   │
+│   ├── ParticipantDTO participantDTO
+│   │   : Cliente / receptor factura
+│   │
+│   │   Campo importante:
+│   │   └── IsWithHoldingTax
+│   │       : Indica si soporta retención
+│   │
+│   │   true
+│   │   └── aplicar retención
+│   │
+│   │   false
+│   │   └── no aplicar retención
+│   │
+│   │
+│   └── InvoiceIssuedDTE invoiceIssued
+│       : Factura emitida
+│
+│       Campo importante:
+│       └── InvoiceIssuedID
+│           : ID factura
+│
+│       Se usa para:
+│       └── Buscar líneas de factura asociadas
+│
+│
+├── STEP 1 → GET BILL CONCEPTS
+│   │
+│   ├── GetPagedListAsync(
+│   │       new BillConceptDTF
+│   │       {
+│   │           InvoiceIssuedID = invoiceIssued.InvoiceIssuedID
+│   │       })
+│   │
+│   │   : Busca todos los conceptos asociados a la factura
+│   │
+│   │
+│   ├── SQL mental:
+│   │
+│   │   SELECT *
+│   │   FROM BillConcept
+│   │   WHERE InvoiceIssuedID = facturaID
+│   │
+│   │
+│   └── Resultado:
+│       ResultDataDto<BillConceptDTE>
+│
+│       └── data
+│           : Lista de líneas de factura
+│
+│
+├── STEP 2 → CREATE EMPTY LIST
+│   │
+│   └── List<BillConceptDTE> billConceptDTEList = new();
+│
+│       : Inicialización segura
+│
+│       Si no hay datos:
+│       └── devuelve []
+│
+│       Nunca:
+│       └── null
+│
+│
+├── STEP 3 → CHECK DATA
+│   │
+│   └── if (billConceptDTEs.data.Any())
+│
+│       true
+│       └── continuar
+│
+│       false
+│       └── return []
+│
+│
+├── STEP 4 → COPY LIST
+│   │
+│   └── billConceptDTEList = billConceptDTEs.data.ToList();
+│
+│       : Convierte resultado en lista editable
+│
+│
+├── STEP 5 → CALCULATE BILL CONCEPTS
+│   │
+│   └── await CalculateBillConcepts(
+│           companyDTE,
+│           participantDTO,
+│           billConceptDTEList);
+│
+│       : Aquí ocurre toda la lógica fiscal / contable
+│
+│
+│   ┌────────────────────────────────────────────────────────────┐
+│   │ INTERNAL FLOW → CalculateBillConcepts()                  │
+│   └────────────────────────────────────────────────────────────┘
+│
+│   │
+│   ├── GET WITHHOLDING TAX
+│   │   │
+│   │   └── _taxService.GetByUidAsync(companyDTE.TaxUID)
+│   │
+│   │       : Obtiene impuesto de retención empresa
+│   │
+│   │       Ej:
+│   │       └── IRPF 15%
+│   │
+│   │
+│   ├── CHECK GLOBAL WITHHOLDING
+│   │   │
+│   │   └── participantDTO.IsWithHoldingTax
+│   │
+│   │       : Decide si se puede aplicar retención
+│   │
+│   │
+│   ├── FILTER CONCEPTS
+│   │   │
+│   │   └── item.Type == WithAmount
+│   │
+│   │       : Solo se calculan líneas monetarias
+│   │
+│   │       No calcula:
+│   │       └── líneas descriptivas
+│   │
+│   │
+│   ├── LOOP ITEMS
+│   │   │
+│   │   └── foreach BillConceptDTE item
+│   │
+│   │
+│   ├── LOAD CONCEPT
+│   │   │
+│   │   └── _conceptService.GetByIdAsync(item.ConceptID)
+│   │
+│   │       : Obtiene concepto completo
+│   │
+│   │       Ej:
+│   │       └── Cuota mensual
+│   │
+│   │
+│   ├── LOAD VAT
+│   │   │
+│   │   └── _taxService.GetByIdAsync(item.VATID)
+│   │
+│   │       Ej:
+│   │       └── IVA 21%
+│   │
+│   │
+│   ├── CALCULATE BASE AMOUNT
+│   │   │
+│   │   └── Base =
+│   │       (Units * Price)
+│   │       * (1 - PercentDiscount / 100)
+│   │
+│   │
+│   │   Precision:
+│   │   ├── Units → 3 decimales
+│   │   ├── Price → 5 decimales
+│   │   └── cálculo interno → alta precisión
+│   │
+│   │
+│   │   IMPORTANTE:
+│   │   └── primero multiplicar
+│   │      luego redondear
+│   │
+│   │
+│   │   Ej:
+│   │   28 × 1.657 = 46.396
+│   │   Round = 46.40
+│   │
+│   │
+│   ├── CALCULATE VAT AMOUNT
+│   │   │
+│   │   └── VAT =
+│   │       Base * VATPercent / 100
+│   │
+│   │       Ej:
+│   │       46.40 × 21%
+│   │       = 9.74
+│   │
+│   │
+│   ├── CALCULATE WITHHOLDING
+│   │   │
+│   │   └── Withholding =
+│   │       Base * WithholdingPercent / 100
+│   │
+│   │
+│   ├── SPECIAL RULE → VAT AMBIT
+│   │   │
+│   │   └── Si VAT.Ambit == RECEPCION
+│   │
+│   │       : No aplicar IVA
+│   │
+│   │       VATAmount = 0
+│   │
+│   │
+│   ├── CALCULATE FINAL AMOUNT
+│   │   │
+│   │   └── Amount =
+│   │       Base
+│   │       + VAT
+│   │       - Withholding
+│   │
+│   │
+│   ├── ROUNDING RULE
+│   │   │
+│   │   └── Todo importe final → 2 decimales
+│   │
+│   │       ├── BaseAmount
+│   │       ├── VATAmount
+│   │       ├── WithholdingAmount
+│   │       └── Amount
+│   │
+│   │
+│   └── UPDATE OBJECT
+│       │
+│       ├── item.ConceptDTE
+│       ├── item.Title
+│       ├── item.Code
+│       ├── item.BaseAmount
+│       ├── item.VATDTE
+│       ├── item.VATID
+│       ├── item.VATPercent
+│       ├── item.VATAmount
+│       ├── item.WithholdingDTE
+│       ├── item.WithholdingID
+│       ├── item.WithholdingPercent
+│       ├── item.WithholdingAmount
+│       └── item.Amount
+│
+│       : El objeto queda completamente calculado
+│
+│
+└── RETURN
+    │
+    └── List<BillConceptDTE>
+        : Lista final enriquecida
+
+        Lista lista para:
+        ├── mostrar factura
+        ├── guardar
+        ├── emitir PDF
+        ├── sumar subtotal
+        ├── sumar IVA
+        ├── sumar retención
+        └── calcular total factura 
+		
+		
+		GetCalculatedConceptDTEListAsync
+: Busca líneas de factura
+: Carga concepto e impuestos
+: Calcula base imponible
+: Calcula IVA
+: Calcula retención
+: Aplica redondeo contable
+: Calcula importe final
+: Devuelve líneas listas para facturar

@@ -1,0 +1,37 @@
+SELECT
+    i.ManagerUID AS NumeroManager,
+    p.Name AS Cliente,
+    i.InvoicingDate AS Fecha,
+    i.Series AS Serie,
+    i.InvoiceNumber AS NumeroFactura,
+    i.TotalAmount AS TotalFactura,
+    ISNULL(b.NumeroPagos, 0) AS NumeroPagos,
+    ISNULL(t.TotalIRPF, 0) AS TotalIRPF,
+    ISNULL(t.TotalIVA, 0) AS TotalIVA
+FROM InvoiceIssued i
+
+LEFT JOIN InvoiceIssuedPersonData p
+    ON i.InvoiceIssuedPersonDataID = p.InvoiceIssuedPersonDataID
+
+LEFT JOIN (
+    SELECT
+        InvoiceIssuedID,
+        COUNT(*) AS NumeroPagos
+    FROM BillIssued
+    GROUP BY InvoiceIssuedID
+) b
+    ON i.InvoiceIssuedID = b.InvoiceIssuedID
+
+LEFT JOIN (
+    SELECT
+        InvoiceIssuedID,
+        SUM(CASE WHEN TaxType = 1 THEN TaxAmount ELSE 0 END) AS TotalIRPF,
+        SUM(CASE WHEN TaxType = 0 THEN TaxAmount ELSE 0 END) AS TotalIVA
+    FROM InvoiceTax
+    GROUP BY InvoiceIssuedID
+) t
+    ON i.InvoiceIssuedID = t.InvoiceIssuedID
+
+WHERE i.ManagerUID = '610088'
+
+ORDER BY i.InvoicingDate DESC;

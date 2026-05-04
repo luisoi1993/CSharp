@@ -1,0 +1,668 @@
+using AutoMapper;
+using IESA.Common.NetCore.Libs.ORM.Wrapper;
+using IESA.Common.NetCore.Utilities.Utilities.Exceptions;
+using IESA.TC.Invoices.V2.Models;
+using IESA.TC.Invoices.V2.Infrastructure.Exercise;
+using IESA.TC.Invoices.V2.Interfaces.Exercise;
+using IESA.TC.Invoices.V2.Interfaces.Serie;
+using IESA.TC.Invoices.V2.Models.DTE;
+using IESA.TC.Invoices.V2.Models.DTF;
+using IESA.TC.Invoices.V2.Models.DTO;
+using IESA.TC.Invoices.V2.Models.Entities;
+using IESA.TC.NetCore.Middleware.Context.Model;
+using Libs.Data.Dto;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+using static IESA.Common.NetCore.Utilities.Utilities.Exceptions.IESACommonExceptionHttpCode;
+
+namespace IESA.TC.Invoices.V2.Infrastructure.Tests.Common.Exercise
+{
+    public class ExerciseServiceTests
+    {
+        private readonly Mock<ILogger<ExerciseService>> _mockLogger;
+        private readonly Mock<IExerciseRepository> _mockExerciseRepo;
+        private readonly TCContext _credential;
+        private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<DBContext> _mockDbContext;
+        private readonly Mock<ISerieService> _mockSerieService;
+        private readonly ExerciseService _exerciseService;
+
+        public ExerciseServiceTests()
+        {
+            _mockLogger = new Mock<ILogger<ExerciseService>>();
+            _mockExerciseRepo = new Mock<IExerciseRepository>();
+            _credential = new TCContext { uidGestor = "TEST-UID" };
+            _mockMapper = new Mock<IMapper>();
+            _mockDbContext = new Mock<DBContext>();
+            _mockSerieService = new Mock<ISerieService>();
+
+            _exerciseService = new ExerciseService(
+                _mockLogger.Object,
+                _mockMapper.Object,
+                _mockDbContext.Object,
+                _credential,
+                _mockExerciseRepo.Object,
+                _mockSerieService.Object,
+                null
+            );
+        }
+
+        #region InsertEntityAsync - Pruebas
+
+        /*
+ * Test unitario que verifica que InsertEntityAsync lance una excepción
+ * cuando se intenta crear un ejercicio para un año que ya existe previamente.
+ *
+ * ¿Qué regla de negocio valida?
+ * - Una empresa no puede tener dos ejercicios con el mismo año.
+ * - Si ya existe un ejercicio activo o registrado para ese año,
+ *   el sistema debe impedir la inserción y lanzar una excepción controlada.
+ *
+ * ¿Cómo funciona?
+ *
+ * 1. Se crea un ExerciseCompleteDTO de prueba con:
+ *      - CompanyUID = "COMPANY-001"
+ *      - OpenAt = 01/01/2026
+ *      - CloseAt = 31/12/2026
+ *      - IsExerciseActive = false
+ *      - Lista de series vacía
+ *
+ *    Este DTO representa el nuevo ejercicio que se intenta insertar.
+ *
+ * 2. Se mockea el repositorio (_mockExerciseRepo) para simular
+ *    que ya existe un ejercicio almacenado con:
+ *      - la misma empresa (COMPANY-001)
+ *      - el mismo año (2026)
+ *
+ *    Esto reproduce el escenario de duplicado que queremos validar.
+ *
+ * 3. Se mockea el mapper (_mockMapper) para convertir el DTO de entrada
+ *    en una entidad ExerciseDTE simulada, evitando depender de AutoMapper real.
+ *
+ * 4. Se ejecuta InsertEntityAsync(dto) dentro de Assert.ThrowsAsync,
+ *    indicando que esperamos que el método lance una excepción del tipo:
+ *
+ *      IESACommonException
+ *
+ *    Esto valida que la lógica de validación detecta correctamente
+ *    el conflicto antes de persistir datos.
+ *
+ * 5. Finalmente se comprueba que el mensaje de error sea exactamente:
+ *
+ *      "Ya existe un ejercicio para el año 2026"
+ *
+ *    Con esto verificamos no solo que se lanza la excepción,
+ *    sino también que el motivo del error es el esperado.
+ *
+ * Resultado esperado:
+ * - El método NO debe insertar el ejercicio.
+ * - Debe detectar el año duplicado.
+ * - Debe lanzar IESACommonException con el mensaje correcto.
+ *
+ * Si todo ocurre así, el test pasa correctamente.
+ */
+
+        [Fact]
+        public async Task InsertEntityAsync_WithDuplicateYear_ShouldThrowException()
+        {
+
+            var dto = new ExerciseCompleteDTO
+            {
+                CompanyUID = "COMPANY-001",
+                OpenAt = new DateTime(2026, 1, 1),
+                CloseAt = new DateTime(2026, 12, 31),
+                IsExerciseActive = false,
+                Series = new List<SerieDTO>()
+            };
+
+            var existingExercises = new ResultDataDto<ExerciseDTE>
+            {
+                data = new List<ExerciseDTE>
+                {
+                    new ExerciseDTE
+                    {
+                        ExerciseID = 1,
+                        CompanyUID = "COMPANY-001",
+                        OpenAt = new DateTime(2026, 1, 1),
+                        CloseAt = new DateTime(2026, 12, 31),
+                        Year = 2026
+                    }
+                }
+            };
+
+            _mockExerciseRepo
+                .Setup(r => r.GetPagedListAsync<ExerciseDTE>(
+                    It.IsAny<ExerciseDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(existingExercises);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ExerciseCompleteDTO>(),
+                    It.IsAny<ExerciseDTE>()))
+                .Returns(new ExerciseDTE());
+
+
+            var exception = await Assert.ThrowsAsync<IESACommonException>(async () =>
+                await _exerciseService.InsertEntityAsync(dto)
+            );
+
+            Assert.Equal("Ya existe un ejercicio para el año 2026", exception.Message);
+        }
+
+
+        //igual que la anterior pero con diferentes años para validar que la lógica de validación de año funciona correctamente y no solo para un caso específico
+        [Theory]
+        [InlineData(2024)]
+        [InlineData(2025)]
+        [InlineData(2027)]
+        [InlineData(2028)]
+        public async Task InsertEntityAsync_WithDifferentYears_ShouldThrowExceptionIfDuplicate(int year)
+        {
+
+            var dto = new ExerciseCompleteDTO
+            {
+                CompanyUID = "COMPANY-001",
+                OpenAt = new DateTime(year, 1, 1),
+                CloseAt = new DateTime(year, 12, 31),
+                IsExerciseActive = false,
+                Series = new List<SerieDTO>()
+            };
+
+            var existingExercises = new ResultDataDto<ExerciseDTE>
+            {
+                data = new List<ExerciseDTE>
+                {
+                    new ExerciseDTE
+                    {
+                        ExerciseID = 1,
+                        CompanyUID = "COMPANY-001",
+                        OpenAt = new DateTime(year, 1, 1),
+                        Year = year
+                    }
+                }
+            };
+
+            _mockExerciseRepo
+                .Setup(r => r.GetPagedListAsync<ExerciseDTE>(
+                    It.IsAny<ExerciseDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(existingExercises);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ExerciseCompleteDTO>(),
+                    It.IsAny<ExerciseDTE>()))
+                .Returns(new ExerciseDTE());
+
+
+            var exception = await Assert.ThrowsAsync<IESACommonException>(async () =>
+                await _exerciseService.InsertEntityAsync(dto)
+            );
+
+            Assert.Equal($"Ya existe un ejercicio para el año {year}", exception.Message);
+        }
+
+        /*
+ * Test unitario que verifica que InsertEntityAsync desactive
+ * automáticamente los ejercicios anteriores cuando se crea
+ * un nuevo ejercicio marcado como activo.
+ *
+ * Regla de negocio:
+ * Solo puede existir un ejercicio activo por empresa.
+ * Si se inserta uno nuevo con IsExerciseActive = true,
+ * todos los ejercicios anteriores deben pasar a inactive.
+ *
+ * ¿Cómo funciona?
+ * - Se crea un nuevo ejercicio activo para 2026.
+ * - Se mockea el repositorio simulando que ya existe
+ *   un ejercicio activo de 2025.
+ * - Se ejecuta InsertEntityAsync().
+ * - Se comprueba que el ejercicio anterior ha sido
+ *   desactivado (IsExerciseActive = false).
+ * - Se verifica que PersistAsync se haya llamado
+ *   al menos dos veces:
+ *      1) insertar nuevo ejercicio
+ *      2) actualizar ejercicio anterior
+ *
+ * Resultado esperado:
+ * El ejercicio nuevo queda activo y
+ * el ejercicio anterior queda desactivado.
+ */
+
+
+        [Fact]
+        public async Task InsertEntityAsync_WithActiveExercise_ShouldDeactivatePreviousExercises()
+        {
+
+            var dto = new ExerciseCompleteDTO
+            {
+                CompanyUID = "COMPANY-001",
+                OpenAt = new DateTime(2026, 1, 1),
+                CloseAt = new DateTime(2026, 12, 31),
+                IsExerciseActive = true,
+                Series = new List<SerieDTO>()
+            };
+
+            var existingExercises = new ResultDataDto<ExerciseDTE>
+            {
+                data = new List<ExerciseDTE>
+        {
+            new ExerciseDTE
+            {
+                ExerciseID = 1,
+                CompanyUID = "COMPANY-001",
+                OpenAt = new DateTime(2025, 1, 1),
+                Year = 2025,
+                IsExerciseActive = true
+            }
+        }
+            };
+
+            var mappedExercise = new ExerciseDTE
+            {
+                ExerciseID = 2,
+                CompanyUID = dto.CompanyUID,
+                OpenAt = dto.OpenAt,
+                CloseAt = dto.CloseAt,
+                Year = 2026,
+                IsExerciseActive = true
+            };
+
+            var mappedResult = new ExerciseCompleteDTO
+            {
+                ExerciseID = 2,
+                Year = 2026
+            };
+
+            _mockExerciseRepo
+                .Setup(r => r.GetPagedListAsync<ExerciseDTE>(
+                    It.IsAny<ExerciseDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(existingExercises);
+
+            _mockExerciseRepo
+                .Setup(r => r.PersistAsync(It.IsAny<ExerciseDTE>()))
+                .ReturnsAsync(mappedExercise);
+
+            // Mock para GetActiveSeriesAsync que llama internamente a _serieService.GetPagedListAsync
+            _mockSerieService
+                .Setup(s => s.GetPagedListAsync(
+                    It.IsAny<SerieDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(new ResultDataDto<SerieDTE> { data = new List<SerieDTE>() });
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ExerciseCompleteDTO>(),
+                    It.IsAny<ExerciseDTE>()))
+                .Returns(mappedExercise);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ExerciseDTE>(),
+                    It.IsAny<ExerciseCompleteDTO>()))
+                .Returns(mappedResult);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<List<SerieDTE>>(),
+                    It.IsAny<List<SerieDTO>>()))
+                .Returns(new List<SerieDTO>());
+
+
+            var result = await _exerciseService.InsertEntityAsync(dto);
+
+
+            Assert.NotNull(result);
+            Assert.False(existingExercises.data.First().IsExerciseActive);
+            _mockExerciseRepo.Verify(r => r.PersistAsync(It.IsAny<ExerciseDTE>()), Times.AtLeast(2));
+        }
+
+        /*
+ * Test unitario que verifica que InsertEntityAsync copie correctamente
+ * las series asociadas al ejercicio activo anterior cuando se crea
+ * un nuevo ejercicio.
+ *
+ * ¿Qué comprueba?
+ * - Que el servicio busque un ejercicio activo previo.
+ * - Que obtenga sus series activas.
+ * - Que convierta las series de SerieDTE a SerieDTO.
+ * - Que valide cada serie antes de copiarla.
+ * - Que cree y persista una nueva SerieDTE por cada serie encontrada.
+ *
+ * ¿Cómo funciona?
+ * - Se crea un nuevo ejercicio para 2026.
+ * - Se mockea una primera consulta sin ejercicios duplicados.
+ * - Se mockea una segunda consulta devolviendo un ejercicio activo de 2025.
+ * - Se mockea SerieService devolviendo dos series activas: FAC y REC.
+ * - Se ejecuta InsertEntityAsync().
+ * - Se verifica que ValidateSerieAsync se ejecute 2 veces.
+ * - Se verifica que PersistAsync de SerieService se ejecute 2 veces.
+ *
+ * Resultado esperado:
+ * Las dos series del ejercicio activo anterior deben validarse
+ * y copiarse correctamente al nuevo ejercicio.
+ */
+
+        /// heredar series ejercicio anterior
+        [Fact]
+        public async Task InsertEntityAsync_WithSeries_ShouldCopySeriesFromActiveExercise()
+        {
+            // Arrange
+            var dto = new ExerciseCompleteDTO
+            {
+                CompanyUID = "COMPANY-001",
+                OpenAt = new DateTime(2026, 1, 1),
+                CloseAt = new DateTime(2026, 12, 31),
+                IsExerciseActive = false,
+                Series = new List<SerieDTO>
+        {
+            new SerieDTO { Name = "FAC", SerieCorrection = false },
+            new SerieDTO { Name = "REC", SerieCorrection = true }
+        }
+            };
+
+            var existingExercises = new ResultDataDto<ExerciseDTE>
+            {
+                data = new List<ExerciseDTE>()
+            };
+
+            var activeExerciseForSeries = new ResultDataDto<ExerciseDTE>
+            {
+                data = new List<ExerciseDTE>
+        {
+            new ExerciseDTE
+            {
+                ExerciseID = 10,
+                CompanyUID = "COMPANY-001",
+                OpenAt = new DateTime(2025, 1, 1),
+                Year = 2025,
+                IsExerciseActive = true
+            }
+        }
+            };
+
+            var activeSeries = new ResultDataDto<SerieDTE>
+            {
+                data = new List<SerieDTE>
+        {
+            new SerieDTE { SerieID = 1, Name = "FAC", SerieCorrection = false, HasTax = true },
+            new SerieDTE { SerieID = 2, Name = "REC", SerieCorrection = true, HasTax = true }
+        }
+            };
+
+            var mappedExercise = new ExerciseDTE
+            {
+                ExerciseID = 1,
+                Year = 2026
+            };
+
+            var mappedResult = new ExerciseCompleteDTO
+            {
+                ExerciseID = 1,
+                Year = 2026
+            };
+
+            _mockExerciseRepo
+                .SetupSequence(r => r.GetPagedListAsync<ExerciseDTE>(
+                    It.IsAny<ExerciseDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(existingExercises)
+                .ReturnsAsync(activeExerciseForSeries);
+
+            _mockExerciseRepo
+                .Setup(r => r.PersistAsync(It.IsAny<ExerciseDTE>()))
+                .ReturnsAsync(mappedExercise);
+
+            _mockSerieService
+                .Setup(s => s.GetPagedListAsync(
+                    It.IsAny<SerieDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(activeSeries);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ExerciseCompleteDTO>(),
+                    It.IsAny<ExerciseDTE>()))
+                .Returns(mappedExercise);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ExerciseDTE>(),
+                    It.IsAny<ExerciseCompleteDTO>()))
+                .Returns(mappedResult);
+
+            // Mock para Map<List<SerieDTE>, List<SerieDTO>>(seriesDTE) - overload de UN parámetro
+            _mockMapper
+                .Setup(m => m.Map<List<SerieDTE>, List<SerieDTO>>(
+                    It.IsAny<List<SerieDTE>>()))
+                .Returns(dto.Series);
+
+            _mockSerieService
+                .Setup(s => s.ValidateSerieAsync(It.IsAny<List<SerieDTO>>(), It.IsAny<SerieDTO>()))
+                .Returns(true);
+
+            _mockSerieService
+                .Setup(s => s.PersistAsync(It.IsAny<SerieDTE>()))
+                .ReturnsAsync(new SerieDTE());
+
+
+            var result = await _exerciseService.InsertEntityAsync(dto);
+
+
+            Assert.NotNull(result);
+            _mockSerieService.Verify(s => s.PersistAsync(It.IsAny<SerieDTE>()), Times.Exactly(2));
+            _mockSerieService.Verify(s => s.ValidateSerieAsync(It.IsAny<List<SerieDTO>>(), It.IsAny<SerieDTO>()), Times.Exactly(2));
+        }
+        #endregion
+
+        #region DeactivateExerciseAsync - Pruebas
+
+                        /*
+                 * Test unitario que verifica el comportamiento correcto del método
+                 * DeactivateExerciseAsync cuando se intenta desactivar un ejercicio válido.
+                 *
+                 * ¿Qué comprueba?
+                 * - Que el servicio pueda obtener correctamente el ejercicio por su ID.
+                 * - Que el ejercicio recuperado sea mapeado correctamente.
+                 * - Que se consulte si el ejercicio tiene facturas asociadas.
+                 * - Que, al no tener facturas, el proceso de desactivación continúe correctamente.
+                 * - Que la comprobación de facturas se ejecute exactamente una vez.
+                 *
+                 * ¿Cómo funciona?
+                 * 1. Se define un ExerciseID de prueba y se crea una entidad ExerciseDTE
+                 *    simulando un ejercicio existente.
+                 *
+                 * 2. Se mockea GetByIdAsync para que, cuando el servicio busque el ejercicio,
+                 *    devuelva la entidad creada previamente.
+                 *
+                 * 3. Se mockea el mapper para que convierta correctamente la entidad
+                 *    recuperada en el objeto esperado por el servicio.
+                 *
+                 * 4. Se mockea HasInvoicesByExerciseAsync para devolver false,
+                 *    simulando que el ejercicio no tiene facturas asociadas.
+                 *
+                 * 5. Se mockea DeactivateAsync para simular una desactivación correcta
+                 *    en el repositorio.
+                 *
+                 * 6. Se ejecuta DeactivateExerciseAsync(exerciseId).
+                 *
+                 * 7. Finalmente se verifica que la comprobación de facturas
+                 *    se haya realizado exactamente una vez.
+                 *
+                 * Resultado esperado:
+                 * El servicio debe completar correctamente el proceso de desactivación
+                 * sin lanzar excepciones.
+                 */
+        [Fact]
+        public async Task DeactivateExerciseAsync_WithValidInactiveExercise_ShouldDeactivateSuccessfully()
+        {
+            // Arrange
+            long exerciseId = 1;
+            var exercise = new ExerciseDTE
+            {
+                ExerciseID = exerciseId,
+                IsExerciseActive = false,
+                Year = 2025
+            };
+
+            // BaseService.GetByIdAsync llama _repository.GetByIdAsync<V>(pId)
+            // pero la interfaz tiene bool opcional → Moq exige especificarlo
+            _mockExerciseRepo
+                .Setup(r => r.GetByIdAsync<ExerciseDTE>(
+                    It.IsAny<object>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(exercise);
+
+            // BaseService.GetByIdAsync hace _mapper.Map<W>(val) → ExerciseDTE → ExerciseDTE
+            _mockMapper
+                .Setup(m => m.Map<ExerciseDTE>(It.IsAny<ExerciseDTE>()))
+                .Returns(exercise);
+
+            _mockExerciseRepo
+                .Setup(r => r.HasInvoicesByExerciseAsync(
+                    It.IsAny<ExerciseDTE>()))
+                .ReturnsAsync(false);
+
+            _mockExerciseRepo
+                .Setup(r => r.DeactivateAsync(
+                    It.IsAny<object>()))
+                .ReturnsAsync(true);
+
+            
+            await _exerciseService.DeactivateExerciseAsync(exerciseId);
+
+            
+            _mockExerciseRepo.Verify(r => r.HasInvoicesByExerciseAsync(
+                It.IsAny<ExerciseDTE>()), Times.Once);
+        }
+
+        /*si intentas desactivar un ejercicio que no existe, el sistema debe detectarlo inmediatamente y lanzar la excepción "Ejercicio no encontrado".*/
+
+        [Fact]
+        public async Task DeactivateExerciseAsync_WithNonExistentExercise_ShouldThrowException()
+        {
+            // Arrange
+            long exerciseId = 999;
+
+            // BaseService.GetByIdAsync llama _repository.GetByIdAsync<V>(pId)
+            // La interfaz tiene bool opcional → Moq exige especificarlo
+            // El primer parámetro es object (no long)
+            _mockExerciseRepo
+                .Setup(r => r.GetByIdAsync<ExerciseDTE>(
+                    It.IsAny<object>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync((ExerciseDTE)null);
+
+            // BaseService.GetByIdAsync hace _mapper.Map<W>(val) → devuelve null si val es null
+            _mockMapper
+                .Setup(m => m.Map<ExerciseDTE>(It.IsAny<ExerciseDTE>()))
+                .Returns((ExerciseDTE)null);
+
+            
+            var exception = await Assert.ThrowsAsync<IESACommonException>(async () =>
+                await _exerciseService.DeactivateExerciseAsync(exerciseId)
+            );
+
+            Assert.Equal("Ejercicio no encontrado", exception.Message);
+        }
+
+        // si un ejercicio tiene facturas asociadas, el sistema debe impedir su desactivación y lanzar una excepción informando del motivo
+
+        [Fact]
+        public async Task DeactivateExerciseAsync_WithInvoices_ShouldThrowException()
+        {
+            // Arrange
+            long exerciseId = 1;
+            var exercise = new ExerciseDTE
+            {
+                ExerciseID = exerciseId,
+                IsExerciseActive = false,
+                Year = 2025
+            };
+
+            _mockExerciseRepo
+                .Setup(r => r.GetByIdAsync<ExerciseDTE>(
+                    It.IsAny<object>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(exercise);
+
+            _mockMapper
+                .Setup(m => m.Map<ExerciseDTE>(It.IsAny<ExerciseDTE>()))
+                .Returns(exercise);
+
+            _mockExerciseRepo
+                .Setup(r => r.HasInvoicesByExerciseAsync(
+                    It.IsAny<ExerciseDTE>()))
+                .ReturnsAsync(true);
+
+            
+            var exception = await Assert.ThrowsAsync<IESACommonException>(async () =>
+                await _exerciseService.DeactivateExerciseAsync(exerciseId)
+            );
+
+            Assert.Equal("No se puede desactivar el ejercicio porque tiene facturas asociadas", exception.Message);
+        }
+
+        /*que DeactivateExerciseAsync() funciona correctamente para distintos ejercicios, siempre que existan y no tengan facturas asociadas, 
+         * verificando además que cada paso del proceso (buscar, comprobar facturas y desactivar) se ejecute exactamente una vez.*/
+        [Theory]
+        [InlineData(1)]
+        [InlineData(5)]
+        [InlineData(10)]
+        public async Task DeactivateExerciseAsync_WithDifferentInactiveExercises_ShouldDeactivateSuccessfully(long exerciseId)
+        {
+            
+            var exercise = new ExerciseDTE
+            {
+                ExerciseID = exerciseId,
+                IsExerciseActive = false,
+                Year = 2024
+            };
+
+            _mockExerciseRepo
+                .Setup(r => r.GetByIdAsync<ExerciseDTE>(
+                    It.IsAny<object>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(exercise);
+
+            _mockMapper
+                .Setup(m => m.Map<ExerciseDTE>(It.IsAny<ExerciseDTE>()))
+                .Returns(exercise);
+
+            _mockExerciseRepo
+                .Setup(r => r.HasInvoicesByExerciseAsync(
+                    It.IsAny<ExerciseDTE>()))
+                .ReturnsAsync(false);
+
+            _mockExerciseRepo
+                .Setup(r => r.DeactivateAsync(
+                    It.IsAny<object>()))
+                .ReturnsAsync(true);
+
+            
+            await _exerciseService.DeactivateExerciseAsync(exerciseId);
+
+            
+            _mockExerciseRepo.Verify(r => r.GetByIdAsync<ExerciseDTE>(
+                It.IsAny<object>(),
+                It.IsAny<bool>()), Times.Once);
+            _mockExerciseRepo.Verify(r => r.HasInvoicesByExerciseAsync(
+                It.IsAny<ExerciseDTE>()), Times.Once);
+            _mockExerciseRepo.Verify(r => r.DeactivateAsync(
+                It.IsAny<object>()), Times.Once);
+        }
+
+
+
+
+
+
+        #endregion
+
+
+    }
+}

@@ -1,0 +1,699 @@
+DOCUMENTACIÓN TÉCNICA DE BASE DE DATOS
+Modelo Relacional del Sistema de Facturación
+
+1. Descripción general del sistema
+El presente documento tiene como finalidad analizar técnicamente la estructura relacional de la base de datos correspondiente al módulo de facturación, identificando las entidades principales involucradas en la emisión de facturas, sus relaciones, claves primarias (Primary Key) y claves foráneas (Foreign Key), así como la funcionalidad de cada una de las tablas que intervienen en el proceso.
+El análisis se ha realizado sobre una base de datos en Microsoft SQL Server Management Studio, obteniendo la información directamente mediante consultas SQL sobre metadatos del sistema (INFORMATION_SCHEMA y sys.foreign_keys), permitiendo verificar de forma precisa:
+
+
+Estructura de tablas.
+
+
+Tipos de datos.
+
+
+Restricciones de integridad.
+
+
+Relaciones físicas entre entidades.
+
+
+Relaciones lógicas no definidas explícitamente mediante FK.
+
+
+Modelo funcional de negocio asociado a la facturación.
+
+
+
+2. Alcance del análisis
+Dentro de la base de datos se han identificado múltiples tablas relacionadas con procesos de negocio diversos (remesas bancarias, recibos, cuotas, procesos masivos, configuraciones, etc.). Sin embargo, el presente documento se centra exclusivamente en el núcleo relacional del sistema de emisión de facturas, compuesto por las siguientes entidades:
+TablaTraducciónInvoiceIssuedFactura EmitidaInvoiceTaxImpuesto de FacturaBillConceptConcepto de FacturaBillConceptAdditionalDataDatos Adicionales del ConceptoInvoiceIssuedPersonDataDatos Personales/Fiscales de la FacturaBillIssuedCobro / Recibo EmitidoInvoiceIssuedRelationRelación de Facturas Emitidas
+Estas tablas constituyen la estructura principal del proceso de generación, composición, fiscalidad y cobro de facturas.
+
+3. Arquitectura general del modelo
+La tabla central del sistema es:
+InvoiceIssued (Factura Emitida)
+Esta entidad actúa como núcleo relacional, almacenando la información general de cada factura emitida y sirviendo como punto de conexión para el resto de tablas especializadas.
+Desde un punto de vista funcional:
+InvoiceIssued│├── InvoiceTax│├── BillConcept│      └── BillConceptAdditionalData│├── InvoiceIssuedPersonData│├── BillIssued│└── InvoiceIssuedRelation
+
+4. Modelo conceptual del proceso
+El funcionamiento lógico del sistema sigue el siguiente flujo:
+1) Creación de factura
+Se genera un registro en:
+InvoiceIssued (Factura Emitida)
+donde se almacena:
+
+
+identificador de factura
+
+
+número de factura
+
+
+serie
+
+
+fecha de emisión
+
+
+importe total
+
+
+tipo de factura
+
+
+estado contable
+
+
+referencia contractual
+
+
+relación con borradores o facturas recurrentes
+
+
+
+2) Asociación de datos fiscales
+La factura se vincula a:
+InvoiceIssuedPersonData (Datos Personales/Fiscales)
+que contiene:
+
+
+NIF
+
+
+nombre / razón social
+
+
+dirección fiscal
+
+
+código postal
+
+
+localidad
+
+
+provincia
+
+
+país
+
+
+Esto permite desacoplar la información fiscal de la estructura principal de la factura.
+
+3) Definición de líneas de factura
+Cada factura contiene uno o varios registros en:
+BillConcept (Concepto de Factura)
+Cada concepto representa una línea facturable:
+Ejemplos:
+
+
+Producto vendido
+
+
+Servicio prestado
+
+
+Cuota periódica
+
+
+Transporte
+
+
+Mantenimiento
+
+
+Recargo adicional
+
+
+Cada línea almacena:
+
+
+descripción
+
+
+unidades
+
+
+precio unitario
+
+
+descuento
+
+
+importe final
+
+
+IVA aplicado
+
+
+retención aplicada
+
+
+tarifa asociada
+
+
+
+4) Datos extendidos de concepto
+Cada línea puede ampliarse mediante:
+BillConceptAdditionalData (Datos Adicionales del Concepto)
+permitiendo almacenar metadatos específicos:
+
+
+concepto facturable
+
+
+revisión de alquiler
+
+
+cuota de servicio
+
+
+información complementaria
+
+
+Esto aporta extensibilidad al modelo sin alterar la tabla principal de conceptos.
+
+5) Cálculo fiscal
+La carga impositiva se almacena en:
+InvoiceTax (Impuesto de Factura)
+incluyendo:
+
+
+base imponible
+
+
+porcentaje aplicado
+
+
+importe fiscal
+
+
+cuenta contable
+
+
+tipo de impuesto
+
+
+Esto separa la fiscalidad de la estructura principal de la factura.
+
+6) Gestión de cobro
+Una vez emitida, la factura puede generar uno o varios registros en:
+BillIssued (Cobro / Recibo Emitido)
+donde se controla:
+
+
+fecha de cobro
+
+
+importe
+
+
+cuenta bancaria
+
+
+IBAN SEPA
+
+
+estado del cobro
+
+
+remesado / no remesado
+
+
+bonificaciones
+
+
+penalizaciones
+
+
+método de pago
+
+
+
+7) Relaciones externas
+Finalmente:
+InvoiceIssuedRelation (Relación de Facturas Emitidas)
+permite enlazar la factura con:
+
+
+sistemas externos
+
+
+referencias de negocio
+
+
+relaciones internas
+
+
+procesos complementarios
+
+
+
+5. Principios de diseño observados
+El modelo presenta características de diseño profesional:
+Normalización
+Separación de responsabilidades por entidad.
+
+Integridad referencial
+Uso de claves foráneas.
+
+Escalabilidad
+Modelo ampliable.
+
+Modularidad
+Cada tabla cumple una responsabilidad concreta.
+
+Bajo acoplamiento
+Separación entre:
+
+
+factura
+
+
+impuestos
+
+
+líneas
+
+
+cobros
+
+
+cliente
+
+
+relaciones externas
+
+
+DOCUMENTACIÓN TÉCNICA DE BASE DE DATOS
+6. Diccionario de datos técnico
+6.1 InvoiceIssued (Factura Emitida)
+Descripción funcional
+
+La tabla InvoiceIssued (Factura Emitida) constituye la entidad principal del modelo relacional. Su finalidad es almacenar la información general asociada a cada factura emitida dentro del sistema.
+
+Desde el punto de vista arquitectónico, esta tabla actúa como tabla maestra, siendo referenciada por múltiples entidades dependientes que amplían la información relativa a la factura (conceptos, impuestos, cobros y relaciones externas).
+
+Primary Key (PK)
+InvoiceIssuedID
+
+Tipo de dato:
+
+bigint
+
+Función:
+
+Identificador único de factura dentro del sistema.
+
+Columnas funcionales principales
+Campo	Traducción	Función
+InvoiceNumber	Número de factura	Número secuencial
+InvoiceType	Tipo de factura	Clasificación documental
+InvoicingDate	Fecha de facturación	Fecha emisión
+OperationDate	Fecha de operación	Fecha efectiva
+TotalAmount	Importe total	Total económico
+AccountedFor	Contabilizada	Estado contable
+AccountedForDate	Fecha contabilización	Registro contable
+ContractReference	Referencia contractual	Relación contractual
+IsInvoiceCorrected	Factura corregida	Indicador correctivo
+CorrectionReasonCode	Código de corrección	Motivo legal
+IsSendToInvoicing	Enviada a facturación	Flujo interno
+Foreign Keys (FK)
+SerieID → Serie.SerieID
+
+Relaciona la factura con una serie documental.
+
+Cardinalidad:
+
+Serie (1) ----< InvoiceIssued (N)
+RecurringInvoiceID → RecurringInvoice.RecurringInvoiceID
+
+Relaciona la factura con un modelo recurrente.
+
+Cardinalidad:
+
+RecurringInvoice (1) ----< InvoiceIssued (N)
+InvoiceIssuedPersonDataID → InvoiceIssuedPersonData.InvoiceIssuedPersonDataID
+
+Relaciona la factura con información fiscal.
+
+Cardinalidad:
+
+InvoiceIssuedPersonData (1) ----< InvoiceIssued (N)
+Relaciones dependientes
+
+La tabla es referenciada por:
+
+BillConcept
+InvoiceTax
+BillIssued
+WorkBudgetInvoiceRelation
+InvoiceIssuedRelation (lógica)
+Rol en negocio
+
+Entidad raíz del proceso de facturación.
+
+6.2 BillConcept (Concepto de Factura)
+Descripción funcional
+
+La tabla BillConcept (Concepto de Factura) almacena las líneas individuales que componen económicamente una factura.
+
+Cada registro representa un concepto facturable.
+
+Ejemplos:
+
+producto
+servicio
+cuota
+mantenimiento
+transporte
+Primary Key (PK)
+BillConceptID
+
+Tipo:
+
+bigint
+Columnas funcionales principales
+Campo	Traducción	Función
+Title	Título	Nombre del concepto
+Description	Descripción	Detalle
+Units	Unidades	Cantidad
+Price	Precio	Precio unitario
+PercentDiscount	% descuento	Descuento
+Amount	Importe	Total línea
+VATPercent	% IVA	Carga fiscal
+VATAmount	Importe IVA	Cuota
+WithholdingPercent	% retención	Retención
+WithholdingAmount	Importe retención	Cuota retenida
+Type	Tipo	Clasificación
+Code	Código	Código interno
+Foreign Keys
+InvoiceIssuedID → InvoiceIssued.InvoiceIssuedID
+
+Asocia línea con factura.
+
+Cardinalidad:
+
+InvoiceIssued (1) ----< BillConcept (N)
+VATID → Tax.TaxID
+
+IVA aplicado.
+
+Cardinalidad:
+
+Tax (1) ----< BillConcept (N)
+WithholdingID → Tax.TaxID
+
+Retención aplicada.
+
+Cardinalidad:
+
+Tax (1) ----< BillConcept (N)
+ConceptID → Concept.ConceptID
+
+Clasificación conceptual.
+
+FeeID → Fee.FeeID
+
+Tarifa asociada.
+
+ReceiptID → Receipt.ReceiptID
+
+Relación con recibos.
+
+Rol en negocio
+
+Define composición económica de la factura.
+
+6.3 BillConceptAdditionalData (Datos Adicionales del Concepto)
+Descripción funcional
+
+Tabla de extensión de metadatos de concepto.
+
+Permite enriquecer la línea facturable con información complementaria.
+
+Primary Key (PK)
+BillConceptAdditionalDataID
+
+Tipo:
+
+bigint
+Foreign Key
+BillConceptID → BillConcept.BillConceptID
+
+Cardinalidad:
+
+BillConcept (1) ----< BillConceptAdditionalData (N)
+Campos relevantes
+Campo	Traducción
+IsServiceFee	Cuota de servicio
+IsBillable	Facturable
+IsRentReview	Revisión de alquiler
+Rol en negocio
+
+Añade extensibilidad funcional al concepto facturable.
+
+6.4 InvoiceTax (Impuesto de Factura)
+Descripción funcional
+
+Tabla encargada de almacenar la carga fiscal aplicada sobre la factura.
+
+Primary Key (PK)
+InvoiceTaxID
+
+Tipo:
+
+bigint
+Columnas funcionales
+Campo	Traducción
+TaxType	Tipo impuesto
+TaxPercent	Porcentaje
+TaxBase	Base imponible
+TaxAmount	Cuota tributaria
+Account	Cuenta contable
+Foreign Keys
+InvoiceIssuedID → InvoiceIssued.InvoiceIssuedID
+
+Cardinalidad:
+
+InvoiceIssued (1) ----< InvoiceTax (N)
+TaxIDForAccounting → Tax.TaxID
+
+Cardinalidad:
+
+Tax (1) ----< InvoiceTax (N)
+Rol en negocio
+
+Gestiona fiscalidad de la factura. 
+
+
+DOCUMENTACIÓN TÉCNICA DE BASE DE DATOS
+6. Diccionario de datos técnico (continuación)
+6.5 InvoiceIssuedPersonData (Datos Personales / Fiscales de la Factura)
+Descripción funcional
+
+La tabla InvoiceIssuedPersonData (Datos Personales / Fiscales de la Factura) almacena la información identificativa, fiscal y geográfica asociada a la entidad receptora o emisora de la factura.
+
+Su diseño desacopla la información fiscal de la tabla principal InvoiceIssued, evitando redundancia y facilitando la reutilización de registros.
+
+Primary Key (PK)
+InvoiceIssuedPersonDataID
+
+Tipo:
+
+bigint
+Columnas funcionales principales
+Campo	Traducción	Función
+NIF	Identificación fiscal	CIF / DNI / NIF
+Name	Nombre / Razón social	Nombre fiscal
+Address	Dirección	Dirección fiscal
+RegionZipCode	Código postal	Localización postal
+Town	Ciudad / Municipio	Localidad
+RegionProvince	Provincia	Provincia
+Country	País	País fiscal
+Hash	Huella digital	Identificador único lógico
+Relación detectada
+InvoiceIssued.InvoiceIssuedPersonDataID → InvoiceIssuedPersonData.InvoiceIssuedPersonDataID
+
+Cardinalidad:
+
+InvoiceIssuedPersonData (1) ----< InvoiceIssued (N)
+
+Interpretación:
+
+Un mismo registro fiscal puede asociarse a múltiples facturas.
+
+Rol en negocio
+
+Centraliza la identidad fiscal y la dirección documental.
+
+6.6 BillIssued (Cobro / Recibo Emitido)
+Descripción funcional
+
+La tabla BillIssued (Cobro / Recibo Emitido) almacena la información asociada al proceso de cobro derivado de una factura emitida.
+
+Gestiona tanto información financiera como operativa.
+
+Primary Key (PK)
+BillIssuedID
+
+Tipo:
+
+bigint
+Columnas funcionales principales
+Campo	Traducción	Función
+BillDate	Fecha de cobro	Fecha emisión recibo
+Amount	Importe	Importe económico
+IBANSEPA	Cuenta bancaria	Cuenta SEPA
+Remitted	Remesado	Estado remesa
+BillStateType	Estado de cobro	Situación financiera
+PaidOut	Importe pagado	Pago efectuado
+PaymentBankAccount	Cuenta de pago	Cuenta bancaria
+ReturnedType	Tipo devolución	Gestión devolución
+ReturnCostAmount	Coste devolución	Comisión
+PenaltyAmount	Penalización	Recargo
+BonusAmount	Bonificación	Descuento
+Printed	Impreso	Estado documental
+PaymentMethodType	Método de pago	Medio cobro
+Foreign Keys
+InvoiceIssuedID → InvoiceIssued.InvoiceIssuedID
+
+Cardinalidad:
+
+InvoiceIssued (1) ----< BillIssued (N)
+
+Interpretación:
+
+Una factura puede generar uno o varios cobros.
+
+ReceiptID → Receipt.ReceiptID
+
+Relaciona el cobro con un recibo formal.
+
+Relaciones dependientes
+
+La tabla es referenciada por:
+
+BankRemittanceBill
+BankRemittanceRejection
+
+Esto evidencia integración bancaria.
+
+Rol en negocio
+
+Control del ciclo de cobro y gestión financiera posterior a la emisión.
+
+6.7 InvoiceIssuedRelation (Relación de Facturas Emitidas)
+Descripción funcional
+
+La tabla InvoiceIssuedRelation (Relación de Facturas Emitidas) almacena vínculos lógicos entre facturas y elementos externos o procesos complementarios.
+
+Actúa como tabla de enlace documental.
+
+Primary Key (PK)
+InvoiceIssuedRelationID
+
+Tipo:
+
+bigint
+Columnas funcionales principales
+Campo	Traducción	Función
+InvoiceID	Identificador de factura	Referencia lógica
+ExternalUID	Identificador externo	Relación externa
+Type	Tipo relación	Clasificación
+Foreign Keys
+
+No se detectan restricciones FK físicas definidas en SQL Server.
+
+No obstante, existe una relación lógica implícita:
+
+InvoiceID → InvoiceIssued.InvoiceIssuedID
+
+Además:
+
+ExternalUID
+
+parece actuar como vínculo externo de negocio.
+
+Rol en negocio
+
+Interoperabilidad y trazabilidad documental.
+
+7. Modelo relacional consolidado
+
+Representación lógica simplificada:
+
+InvoiceIssued
+│
+├── InvoiceTax
+│
+├── BillConcept
+│      └── BillConceptAdditionalData
+│
+├── InvoiceIssuedPersonData
+│
+├── BillIssued
+│
+└── InvoiceIssuedRelation
+Cardinalidades
+InvoiceIssuedPersonData (1) ----< InvoiceIssued (N)
+
+Serie (1) --------------------< InvoiceIssued (N)
+
+RecurringInvoice (1) ---------< InvoiceIssued (N)
+
+InvoiceIssued (1) ------------< InvoiceTax (N)
+
+InvoiceIssued (1) ------------< BillConcept (N)
+
+BillConcept (1) --------------< BillConceptAdditionalData (N)
+
+InvoiceIssued (1) ------------< BillIssued (N)
+
+InvoiceIssued (1) ------------< InvoiceIssuedRelation (N) [lógica]
+8. Conclusiones técnicas
+
+Tras el análisis estructural de la base de datos se concluye:
+
+Modelo altamente normalizado
+
+La separación funcional entre:
+
+factura
+fiscalidad
+conceptos
+cobro
+datos fiscales
+relaciones externas
+
+reduce redundancia y mejora consistencia.
+
+Integridad relacional
+
+El uso de Primary Keys y Foreign Keys garantiza trazabilidad entre entidades.
+
+Escalabilidad
+
+El modelo permite crecer sin modificar entidades núcleo.
+
+Especialmente gracias a:
+
+BillConceptAdditionalData
+InvoiceIssuedRelation
+Diseño orientado a negocio real
+
+El sistema contempla:
+
+emisión documental
+cálculo fiscal
+facturación recurrente
+remesas bancarias
+devoluciones
+bonificaciones
+penalizaciones
+trazabilidad externa
+Robustez arquitectónica
+
+Se trata de un modelo de datos sólido, modular y apto para entornos empresariales con alta complejidad documental y financiera.

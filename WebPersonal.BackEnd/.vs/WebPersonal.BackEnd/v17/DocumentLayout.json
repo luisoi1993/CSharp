@@ -1,0 +1,71 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\webpersonal.backend\\webpersonal.backend\\sartup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|solutionrelative:webpersonal.backend\\sartup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\webpersonal.backend\\webpersonal.backend\\controllers\\perfilpersonalcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|solutionrelative:webpersonal.backend\\controllers\\perfilpersonalcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\webpersonal.backend\\webpersonal.backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|solutionrelative:webpersonal.backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 437,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "PerfilPersonalController.cs",
+              "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Controllers\\PerfilPersonalController.cs",
+              "RelativeDocumentMoniker": "WebPersonal.BackEnd\\Controllers\\PerfilPersonalController.cs",
+              "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Controllers\\PerfilPersonalController.cs",
+              "RelativeToolTip": "WebPersonal.BackEnd\\Controllers\\PerfilPersonalController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAA6AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-04T09:18:36.585Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Sartup.cs",
+              "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Sartup.cs",
+              "RelativeDocumentMoniker": "WebPersonal.BackEnd\\Sartup.cs",
+              "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Sartup.cs",
+              "RelativeToolTip": "WebPersonal.BackEnd\\Sartup.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAACYAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-04T09:10:07.727Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Program.cs",
+              "RelativeDocumentMoniker": "WebPersonal.BackEnd\\Program.cs",
+              "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Program.cs",
+              "RelativeToolTip": "WebPersonal.BackEnd\\Program.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAAAkwC8AAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-04T09:06:10.501Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

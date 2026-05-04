@@ -1,0 +1,531 @@
+using AutoMapper;
+using IESA.Common.NetCore.Libs.ORM.Wrapper;
+using IESA.Common.NetCore.Utilities.Utilities.Exceptions;
+using IESA.TC.Invoices.V2.Infrastructure.Serie;
+using IESA.TC.Invoices.V2.Interfaces.Serie;
+using IESA.TC.Invoices.V2.Models;
+using IESA.TC.Invoices.V2.Models.Base;
+using IESA.TC.Invoices.V2.Models.DTE;
+using IESA.TC.Invoices.V2.Models.DTF;
+using IESA.TC.Invoices.V2.Models.DTO;
+using IESA.TC.NetCore.Middleware.Context.Model;
+using Libs.Data.Dto;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+using static IESA.Common.NetCore.Utilities.Utilities.Exceptions.IESACommonExceptionHttpCode;
+
+
+namespace IESA.TC.Invoices.V2.Infrastructure.Tests.Common.Serie
+{
+    public class SerieServiceTests
+    {
+        private readonly Mock<ILogger<SerieService>> _mockLogger;
+        private readonly Mock<ISerieRepository> _mockRepo;
+        private readonly Mock<TCContext> _mockCredential;
+        private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<DBContext> _mockDbContext;
+        private readonly SerieService _serieService;
+
+        public SerieServiceTests()
+        {
+            _mockLogger = new Mock<ILogger<SerieService>>();
+            _mockRepo = new Mock<ISerieRepository>();
+            _mockCredential = new Mock<TCContext>();
+            _mockMapper = new Mock<IMapper>();
+            _mockDbContext = new Mock<DBContext>();
+
+            _serieService = new SerieService(
+                _mockMapper.Object,
+                _mockLogger.Object,
+                _mockRepo.Object,
+                _mockCredential.Object,
+                _mockDbContext.Object
+            );
+        }
+
+        #region ValidateSerieAsync - Nombres Correctos
+        [Theory]
+        [InlineData("ABC")]
+        [InlineData("A1B2C3")]
+        [InlineData("Serie-123")]
+        [InlineData("SERIE_2024")]
+        [InlineData("A")]
+        [InlineData("12345")]
+        [InlineData("Serie 1")]
+        [InlineData("FAC2024")]
+        [InlineData("INV-001")]
+        [InlineData("SER_TEST")]
+        public void ValidateSerieAsync_WithValidNames(string validName)
+        {
+            
+            var series = new List<SerieDTO>();
+            var newSerie = new SerieDTO
+            {
+                SerieID = 1,
+                Name = validName,
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            
+            var result = _serieService.ValidateSerieAsync(series, newSerie);
+
+            
+            Assert.True(result);
+        }
+
+        [Theory]
+        [InlineData("ABC")]
+        [InlineData("A1B2C3")]
+        [InlineData("Serie-123")]
+        [InlineData("SERIE_2024")]
+        [InlineData("A")]
+        [InlineData("12345")]
+        [InlineData("Serie 1")]
+        [InlineData("FAC2024")]
+        [InlineData("INV-001")]
+        [InlineData("SER_TEST")]
+        public async Task InsertSerieAsync_WithValidNames(string validName)
+        {
+            
+            var dto = new SerieDTO
+            {
+                SerieID = 1,
+                Name = validName,
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            var pagedSeries = new ResultDataDto<SerieDTE>
+            {
+                data = new List<SerieDTE>()
+            };
+
+            var mappedSeries = new ResultDataDto<SerieDTO>
+            {
+                data = new List<SerieDTO>()
+            };
+
+            var mappedDte = new SerieDTE
+            {
+                SerieID = dto.SerieID,
+                Name = dto.Name
+            };
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<SerieDTE>(
+                    It.IsAny<SerieDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(pagedSeries);
+
+            _mockRepo
+                .Setup(r => r.PersistAsync(It.IsAny<SerieDTE>()))
+                .ReturnsAsync(mappedDte);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ResultDataDto<SerieDTE>>(),
+                    It.IsAny<ResultDataDto<SerieDTO>>()))
+                .Returns(mappedSeries);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<SerieDTO>(),
+                    It.IsAny<SerieDTE>()))
+                .Returns(mappedDte);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<SerieDTE>(),
+                    It.IsAny<SerieDTO>()))
+                .Returns(dto);
+
+            
+            var result = await _serieService.InsertSerieAsync(dto);
+
+            
+            Assert.NotNull(result);
+            Assert.Equal(validName, result.Name);
+        }
+
+
+
+        [Fact]
+        public void ValidateSerieAsync_WithValidNameUpdateSameSerie()
+        {
+            
+            var series = new List<SerieDTO>
+            {
+                new SerieDTO { SerieID = 1, Name = "SERIE-A", SerieCorrection = false }
+            };
+            var updateSerie = new SerieDTO
+            {
+                SerieID = 1,
+                Name = "SERIE-A",
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            
+            var result = _serieService.ValidateSerieAsync(series, updateSerie);
+
+            
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task UpdateSerieAsync_WithValidNameUpdateSameSerie()
+        {
+            
+            var dto = new SerieDTO
+            {
+                SerieID = 1,
+                Name = "SERIE-A",
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            var existingSeries = new List<SerieDTE>
+    {
+        new SerieDTE
+        {
+            SerieID = 1,
+            Name = "SERIE-A",
+            SerieCorrection = false,
+            ExerciseID = 1
+        }
+    };
+
+            var pagedSeries = new ResultDataDto<SerieDTE>
+            {
+                data = existingSeries
+            };
+
+            var mappedSeries = new List<SerieDTO>
+    {
+        new SerieDTO
+        {
+            SerieID = 1,
+            Name = "SERIE-A",
+            SerieCorrection = false
+        }
+    };
+
+            var mappedResult = new SerieDTO
+            {
+                SerieID = 1,
+                Name = "SERIE-A",
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<SerieDTE>(
+                    It.IsAny<SerieDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(pagedSeries);
+
+            _mockRepo
+                .Setup(r => r.HasInvoicesBySerieIdAsync(It.IsAny<long>()))
+                .ReturnsAsync(false);
+
+            _mockRepo
+                .Setup(r => r.PersistAsync(It.IsAny<SerieDTE>()))
+                .ReturnsAsync(existingSeries.First());
+
+            
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<IEnumerable<SerieDTE>>(),  
+                    It.IsAny<List<SerieDTO>>()))
+                .Returns(mappedSeries);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<SerieDTE>(),
+                    It.IsAny<SerieDTO>()))
+                .Returns(mappedResult);
+
+            
+            var result = await _serieService.UpdateSerieAsync(dto);
+
+            
+            Assert.NotNull(result);
+            Assert.Equal(dto.SerieID, result.SerieID);
+            Assert.Equal(dto.Name, result.Name);
+
+           
+            _mockRepo.Verify(r => r.GetPagedListAsync<SerieDTE>(
+                It.IsAny<SerieDTF>(),
+                It.IsAny<bool>()),
+                Times.Once);
+            _mockRepo.Verify(r => r.HasInvoicesBySerieIdAsync(1), Times.Once);
+            _mockRepo.Verify(r => r.HasRecurringInvoicesBySerieAsync(It.IsAny<string>()), Times.Never);
+        }
+
+
+
+        #endregion
+
+        #region ValidateSerieAsync - Nombres Incorrectos
+
+        [Theory]
+        [InlineData("Ñ123")]
+        [InlineData("SÉRIE")]
+        [InlineData("FACTURA€")]
+        [InlineData("TEST¡")]
+        [InlineData("123á")]
+        [InlineData("Ü")]
+        [InlineData("SERIE©")]
+        [InlineData("TEST™")]
+        [InlineData("SERIEñ")]
+        [InlineData("TÉSTá")]
+        public void ValidateSerieAsync_WithInvalidCharacters(string invalidName)
+        {
+            
+            var series = new List<SerieDTO>();
+            var newSerie = new SerieDTO
+            {
+                SerieID = 1,
+                Name = invalidName,
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            
+            var exception = Assert.Throws<IESACommonException>(() =>
+                _serieService.ValidateSerieAsync(series, newSerie)
+            );
+
+            Assert.Equal("El nombre de la serie contiene caracteres no validos.", exception.Message);
+        }
+
+        [Theory]
+        [InlineData("Ñ123")]
+        [InlineData("SÉRIE")]
+        [InlineData("FACTURA€")]
+        [InlineData("TEST¡")]
+        [InlineData("123á")]
+        [InlineData("Ü")]
+        [InlineData("SERIE©")]
+        [InlineData("TEST™")]
+        [InlineData("SERIEñ")]
+        [InlineData("TÉSTá")]
+        public async Task InsertSerieAsync_WithInvalidCharacters(string invalidName)
+        {
+            
+            var dto = new SerieDTO
+            {
+                SerieID = 1,
+                Name = invalidName,
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            var pagedSeries = new ResultDataDto<SerieDTE>
+            {
+                data = new List<SerieDTE>()
+            };
+
+            var mappedSeries = new ResultDataDto<SerieDTO>
+            {
+                data = new List<SerieDTO>()
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<SerieDTE>(
+                    It.IsAny<SerieDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(pagedSeries);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ResultDataDto<SerieDTE>>(),
+                    It.IsAny<ResultDataDto<SerieDTO>>()))
+                .Returns(mappedSeries);
+
+            
+            var exception = await Assert.ThrowsAsync<IESACommonException>(async () =>
+                await _serieService.InsertSerieAsync(dto));
+
+            
+            Assert.Equal(
+                "El nombre de la serie contiene caracteres no validos.",
+                exception.Message);
+        }
+
+        [Fact]
+        public void ValidateSerieAsync_WithDuplicateName()
+        {
+            
+            var series = new List<SerieDTO>
+            {
+                new SerieDTO { SerieID = 1, Name = "SERIE-A", SerieCorrection = false }
+            };
+            var newSerie = new SerieDTO
+            {
+                SerieID = 2,
+                Name = "SERIE-A",
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            
+            var exception = Assert.Throws<IESACommonException>(() =>
+                _serieService.ValidateSerieAsync(series, newSerie)
+            );
+
+            Assert.Equal("Ya existe una serie con el mismo nombre", exception.Message);
+        }
+
+        [Fact]
+        public async Task InsertSerieAsync_WithDuplicateName()
+        {
+           
+            var dto = new SerieDTO
+            {
+                SerieID = 2,
+                Name = "SERIE-A",
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            var pagedSeries = new ResultDataDto<SerieDTE>
+            {
+                data = new List<SerieDTE>
+        {
+            new SerieDTE
+            {
+                SerieID = 1,
+                Name = "SERIE-A",
+                SerieCorrection = false
+            }
+        }
+            };
+
+            var mappedSeries = new ResultDataDto<SerieDTO>
+            {
+                data = new List<SerieDTO>
+        {
+            new SerieDTO
+            {
+                SerieID = 1,
+                Name = "SERIE-A",
+                SerieCorrection = false
+            }
+        }
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<SerieDTE>(
+                    It.IsAny<SerieDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(pagedSeries);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ResultDataDto<SerieDTE>>(),
+                    It.IsAny<ResultDataDto<SerieDTO>>()))
+                .Returns(mappedSeries);
+
+            
+            var exception = await Assert.ThrowsAsync<IESACommonException>(async () =>
+                await _serieService.InsertSerieAsync(dto));
+
+            
+            Assert.Equal(
+                "Ya existe una serie con el mismo nombre",
+                exception.Message);
+        }
+
+
+
+        [Fact]
+        public void ValidateSerieAsync_WithEmptyName()
+        {
+            
+            var series = new List<SerieDTO>();
+            var newSerie = new SerieDTO
+            {
+                SerieID = 1,
+                Name = "",
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            
+            var result = _serieService.ValidateSerieAsync(series, newSerie);
+
+            
+            Assert.True(result);
+        }
+
+        [Fact]
+        public async Task InsertSerieAsync_WithEmptyName()
+        {
+           
+            var dto = new SerieDTO
+            {
+                SerieID = 1,
+                Name = "",
+                ExerciseID = 1,
+                SerieCorrection = false
+            };
+
+            var pagedSeries = new ResultDataDto<SerieDTE>
+            {
+                data = new List<SerieDTE>()
+            };
+
+            var mappedSeries = new ResultDataDto<SerieDTO>
+            {
+                data = new List<SerieDTO>()
+            };
+
+            var mappedDte = new SerieDTE
+            {
+                SerieID = dto.SerieID,
+                Name = dto.Name
+            };
+
+            _mockRepo
+                .Setup(r => r.GetPagedListAsync<SerieDTE>(
+                    It.IsAny<SerieDTF>(),
+                    It.IsAny<bool>()))
+                .ReturnsAsync(pagedSeries);
+
+            _mockRepo
+                .Setup(r => r.PersistAsync(It.IsAny<SerieDTE>()))
+                .ReturnsAsync(mappedDte);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<ResultDataDto<SerieDTE>>(),
+                    It.IsAny<ResultDataDto<SerieDTO>>()))
+                .Returns(mappedSeries);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<SerieDTO>(),
+                    It.IsAny<SerieDTE>()))
+                .Returns(mappedDte);
+
+            _mockMapper
+                .Setup(m => m.Map(
+                    It.IsAny<SerieDTE>(),
+                    It.IsAny<SerieDTO>()))
+                .Returns(dto);
+
+            
+            var result = await _serieService.InsertSerieAsync(dto);
+
+            
+            Assert.NotNull(result);
+            Assert.Equal("", result.Name);
+        }
+
+        #endregion
+
+    }
+}
