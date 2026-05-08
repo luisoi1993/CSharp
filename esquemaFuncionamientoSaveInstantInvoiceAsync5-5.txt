@@ -1,0 +1,829 @@
+SaveInstantInvoiceAsync()
+│
+├── PURPOSE (Objetivo)
+│   : Crear una factura emitida instantánea completa
+│   : Validar todos los requisitos fiscales, legales y de negocio
+│   : Persistir factura + vencimientos + conceptos + impuestos en una transacción
+│   : Devolver la entidad factura creada (sin número, se asigna después)
+│
+│   Resultado final:
+│   ├── InvoiceIssuedDTE (factura persistida)
+│   ├── BillIssued (vencimientos asociados)
+│   ├── BillConcept (conceptos/líneas de factura)
+│   ├── InvoiceTax (desglose impositivo)
+│   └── InvoiceIssuedPersonData (snapshot datos cliente)
+│
+│   Atributo transaccional:
+│   └── [Transactional(REQUIRED_NEW, DBContext)]
+│       : Nueva transacción independiente
+│       : Si falla cualquier paso → rollback total
+│       : Si todo OK → commit atómico
+│
+│
+├── INPUT (Entrada)
+│   │
+│   ├── InstantInvoiceDTO instantInvoiceDTO
+│   │   : Datos de la factura a crear
+│   │
+│   │   Campos importantes:
+│   │   ├── CompanyUID
+│   │   │   : UID de la empresa emisora
+│   │   ├── ParticipantUID
+│   │   │   : UID del cliente receptor
+│   │   ├── SerieID
+│   │   │   : ID de la serie seleccionada
+│   │   ├── DraftInvoiceIssuedID
+│   │   │   : ID del borrador (opcional, null si no viene de borrador)
+│   │   ├── OperationDate
+│   │   │   : Fecha de operación de la factura
+│   │   ├── ContractReference
+│   │   │   : Referencia de contrato (opcional)
+│   │   ├── ManagerUID
+│   │   │   : UID del gestor (se sobreescribe con _credential)
+│   │   ├── BillConcepts
+│   │   │   : Lista de conceptos/líneas de factura
+│   │   │   └── List<InstantBillConceptDTO>
+│   │   │       ├── ConceptID
+│   │   │       ├── Description
+│   │   │       ├── Units
+│   │   │       ├── Price
+│   │   │       ├── VATID
+│   │   │       ├── PercentDiscount
+│   │   │       └── Order
+│   │   ├── Bills
+│   │   │   : Lista de vencimientos
+│   │   │   └── List<InstantBillIssuedDTO>
+│   │   │       ├── BillDate
+│   │   │       ├── Amount
+│   │   │       ├── BillStateType
+│   │   │       ├── PaymentMethodType
+│   │   │       ├── PaymentBankAccount
+│   │   │       └── IBANSEPA
+│   │   ├── Files
+│   │   │   : Archivos adjuntos (se guardan aparte)
+│   │   └── FilesDelete
+│   │       : Archivos a eliminar
+│   │
+│   │
+│   └── ExerciseDTE exerciseDTE
+│       : Ejercicio fiscal actual
+│
+│       Campos importantes:
+│       └── ExerciseID
+│           : ID del ejercicio vigente
+│
+│       Se usa para:
+│       └── Resolver la serie correcta al ejercicio actual
+│
+│
+├── STEP 1 → VALIDACIÓN VERIFACTU
+│   │
+│   ├── _verifactuSignedCheckService
+│   │       .ValidateVerifactuCheckAsync(CompanyUID)
+│   │
+│   │   : Comprueba si la empresa puede emitir facturas
+│   │   : Verifica el estado del registro Verifactu
+│   │
+│   │   Resultado:
+│   │   └── verifactuCheck
+│   │       ├── CanCreate (bool)
+│   │       │   : ¿Puede crear facturas?
+│   │       ├── Reason (string)
+│   │       │   : Motivo de bloqueo
+│   │       └── CompanyNIF (string)
+│   │           : NIF de la empresa
+│   │
+│   │
+│   ├── CHECK: verifactuCheck.CanCreate == false
+│   │   │
+│   │   └── ❌ throw IESACommonException(verifactuCheck.Reason)
+│   │       : La empresa no puede emitir facturas
+│   │       : Ej: "Empresa bloqueada por Verifactu"
+│   │
+│   │
+│   └── CHECK: verifactuCheck.CanCreate == true
+│       │
+│       └── STEP 1.1 → VALIDACIÓN TICKETBAI (TBAI)
+│           │
+│           ├── _verifactuSignedCheckService
+│           │       .GetCheckSignedByCompanyUIDAsync(CompanyUID)
+│           │
+│           │   Resultado:
+│           │   └── tbaiCheck
+│           │       ├── SendToTaxAgency (bool)
+│           │       │   : ¿Envía facturas a Hacienda?
+│           │       └── UsesTBAI (bool)
+│           │           : ¿Usa sistema TicketBAI?
+│           │
+│           │
+│           ├── CONDICIÓN:
+│           │   tbaiCheck.SendToTaxAgency == true
+│           │   && tbaiCheck.UsesTBAI == true
+│           │
+│           │   : Solo aplica a País Vasco (Álava, Guipúzcoa, Vizcaya)
+│           │
+│           │
+│           └── CHECK CERTIFICADO:
+│               │
+│               └── IsCertificateUpload(verifactuCheck.CompanyNIF)
+│                   │
+│                   │   ┌──────────────────────────────────────┐
+│                   │   │ IsCertificateUpload() (privado)       │
+│                   │   ├──────────────────────────────────────┤
+│                   │   │ _certificatesClientService            │
+│                   │   │   .CheckCertificateByNIFObject(nif)   │
+│                   │   │                                       │
+│                   │   │ Comprueba si existe certificado        │
+│                   │   │ digital subido en Azure                │
+│                   │   │                                       │
+│                   │   │ cert != null                           │
+│                   │   │ && cert.operationSuccess == true       │
+│                   │   │   → return true                       │
+│                   │   │                                       │
+│                   │   │ else                                   │
+│                   │   │   → return false                      │
+│                   │   └──────────────────────────────────────┘
+│                   │
+│                   ├── false
+│                   │   └── ❌ throw "No se dispone de certificado
+│                   │              para envíos a TicketBai.
+│                   │              NIF: {NIF}"
+│                   │
+│                   └── true
+│                       └── ✅ continúa
+│
+│
+├── STEP 2 → VALIDACIÓN DE BORRADOR (opcional)
+│   │
+│   ├── CHECK: instantInvoiceDTO.DraftInvoiceIssuedID != null
+│   │
+│   │   : La factura viene de un borrador previo
+│   │
+│   │   false
+│   │   └── ✅ saltar paso (no hay borrador)
+│   │
+│   │   true
+│   │   └── continuar validación
+│   │
+│   │
+│   ├── _draftInvoiceIssuedService
+│   │       .UpdateDraftInvoiceIssuedStatusAsync(DraftID)
+│   │
+│   │   : Marca el borrador como "facturado"
+│   │   : Devuelve true si YA estaba facturado
+│   │   : Devuelve false si se marcó correctamente
+│   │
+│   │   Propósito:
+│   │   └── Evitar crear facturas duplicadas desde el mismo borrador
+│   │
+│   │
+│   ├── CHECK: invoiced == true
+│   │   │
+│   │   └── ❌ throw "La factura ya esta creada"
+│   │       : El borrador ya fue convertido en factura antes
+│   │       : Protección contra doble click / peticiones duplicadas
+│   │
+│   │
+│   └── invoiced == false
+│       └── ✅ borrador marcado como facturado, continúa
+│
+│
+├── STEP 3 → OBTENCIÓN DE EMPRESA Y CLIENTE
+│   │
+│   ├── STEP 3.1 → OBTENER EMPRESA
+│   │   │
+│   │   └── _companyService.GetByUidAsync<RepCompanyDTE>(CompanyUID)
+│   │
+│   │       Resultado:
+│   │       └── companyDTE
+│   │           ├── CompanyUID
+│   │           ├── BusinessName
+│   │           ├── NIF
+│   │           ├── TaxUID (retención empresa)
+│   │           ├── ManagerUID
+│   │           └── Code
+│   │
+│   │       Se usará para:
+│   │       ├── Calcular retenciones (TaxUID)
+│   │       ├── Calcular conceptos
+│   │       └── Validar dirección emisor
+│   │
+│   │
+│   ├── STEP 3.2 → OBTENER CLIENTE
+│   │   │
+│   │   └── _participantService
+│   │           .GetParticipantDTOByParticipantUIDAsync(ParticipantUID)
+│   │
+│   │       Resultado:
+│   │       └── participantDTO
+│   │           ├── ParticipantUID
+│   │           ├── NIF
+│   │           ├── IdentificationType (NIF/NIE/CIF/Pasaporte...)
+│   │           ├── IsWithHoldingTax (¿soporta retención?)
+│   │           ├── PayerUID (pagador asociado)
+│   │           ├── CompanyUID
+│   │           └── ... (nombre, dirección, etc.)
+│   │
+│   │
+│   ├── CHECK: participantDTO == null
+│   │   │
+│   │   └── ❌ throw "Cliente no encontrado"
+│   │
+│   │
+│   └── STEP 3.3 → VALIDAR DATOS DEL CLIENTE
+│       │
+│       └── Utilities.ValidateParticipant(participantDTO)
+│
+│           : Valida que el cliente tenga todos los datos obligatorios
+│           : Retorna StringBuilder con errores acumulados
+│
+│           Validaciones posibles:
+│           ├── Nombre/Razón social
+│           ├── NIF/CIF
+│           ├── Dirección
+│           ├── Código postal
+│           └── Otros campos requeridos
+│
+│           CHECK: error.Length > 0
+│           └── ❌ throw IESACommonException(errores acumulados)
+│
+│
+├── STEP 4 → VALIDACIÓN Y RESOLUCIÓN DE SERIE
+│   │
+│   ├── STEP 4.1 → SERIE SELECCIONADA
+│   │   │
+│   │   └── CHECK: SerieID == 0 || SerieID == null
+│   │       │
+│   │       └── ❌ throw "Debes seleccionar una serie"
+│   │
+│   │
+│   ├── STEP 4.2 → RESOLVER SERIE AL EJERCICIO ACTUAL
+│   │   │
+│   │   └── GetCurrentSerieToExerciseAsync(SerieID, exerciseDTE)
+│   │
+│   │       ┌──────────────────────────────────────────────────────┐
+│   │       │ GetCurrentSerieToExerciseAsync() (privado)            │
+│   │       ├──────────────────────────────────────────────────────┤
+│   │       │                                                       │
+│   │       │ _serieService.GetByIdAsync<SerieDTE>(serieID)         │
+│   │       │   └── currentSerie                                   │
+│   │       │                                                       │
+│   │       │ CASO 1:                                               │
+│   │       │   currentSerie.ExerciseID == exerciseDTE.ExerciseID   │
+│   │       │   : La serie pertenece al ejercicio actual            │
+│   │       │   └── return currentSerie (sin cambios)              │
+│   │       │                                                       │
+│   │       │ CASO 2:                                               │
+│   │       │   currentSerie.ExerciseID != exerciseDTE.ExerciseID   │
+│   │       │   : La serie pertenece a otro ejercicio               │
+│   │       │   : Buscar serie equivalente en ejercicio actual      │
+│   │       │   │                                                   │
+│   │       │   ├── Filtro:                                         │
+│   │       │   │   ├── ExerciseID = ejercicio actual               │
+│   │       │   │   ├── Name = mismo nombre de serie                │
+│   │       │   │   ├── IsActive = true                             │
+│   │       │   │   └── Limit = 1                                  │
+│   │       │   │                                                   │
+│   │       │   ├── Encontrada                                      │
+│   │       │   │   └── return targetSerie                         │
+│   │       │   │                                                   │
+│   │       │   └── No encontrada                                   │
+│   │       │       └── ❌ throw "No existe una serie activa        │
+│   │       │              '{nombre}' para el ejercicio actual"     │
+│   │       └──────────────────────────────────────────────────────┘
+│   │
+│   │       Resultado:
+│   │       └── currentSerie
+│   │           ├── SerieID (del ejercicio actual)
+│   │           ├── Name (ej: "A", "B", "R")
+│   │           ├── Counter (último número usado)
+│   │           └── ExerciseID
+│   │
+│   │       Actualiza DTO:
+│   │       ├── instantInvoiceDTO.SerieID = currentSerie.SerieID
+│   │       └── instantInvoiceDTO.Series = currentSerie.Name
+│   │
+│   │
+│   └── STEP 4.3 → VALIDAR SERIE RESULTANTE
+│       │
+│       └── CHECK: instantInvoiceDTO.Series == null
+│           │
+│           └── ❌ throw "Debes seleccionar una serie"
+│               : Caso borde: GetCurrentSerieToExerciseAsync
+│               : devolvió serie con Name null
+│
+│
+├── STEP 5 → VALIDACIÓN DE CONCEPTOS
+│   │
+│   ├── STEP 5.1 → ¿HAY CONCEPTOS?
+│   │   │
+│   │   └── CHECK: instantInvoiceDTO.BillConcepts.Count == 0
+│   │       │
+│   │       └── ❌ throw "No se puede crear una factura sin referencias"
+│   │           : Una factura debe tener al menos 1 línea/concepto
+│   │
+│   │
+│   └── STEP 5.2 → ¿TODOS TIENEN DESCRIPCIÓN?
+│       │
+│       └── instantInvoiceDTO.BillConcepts
+│               .Any(bc => string.IsNullOrWhiteSpace(bc.Description))
+│
+│           true
+│           └── ❌ throw "La descripción de los conceptos es obligatoria"
+│               : Cada línea de factura necesita texto descriptivo
+│
+│           false
+│           └── ✅ todos los conceptos tienen descripción
+│
+│
+├── STEP 6 → VALIDACIONES DE NEGOCIO DEL CLIENTE
+│   │
+│   ├── STEP 6.1 → SITUACIÓN JUDICIAL
+│   │   │
+│   │   ├── _participantPayerConditionService
+│   │   │       .GetParticipantPayerConditionByParticipantUID(
+│   │   │           participantDTO.ParticipantUID,
+│   │   │           participantDTO.PayerUID)
+│   │   │
+│   │   │   : Busca condiciones especiales del pagador
+│   │   │
+│   │   │   Resultado:
+│   │   │   └── participantPayerConditionDTE
+│   │   │       └── StopPaymentID
+│   │   │           : Tipo de bloqueo de pago
+│   │   │
+│   │   │
+│   │   └── CHECK: StopPaymentID == JudicialSituation
+│   │       │
+│   │       └── ❌ throw "El cliente se encuentra en Situación
+│   │                     Judicial y no se pueden crear facturas."
+│   │           : Cliente bloqueado judicialmente
+│   │           : No se permite facturar
+│   │
+│   │
+│   ├── STEP 6.2 → VENCIMIENTOS PENDIENTES
+│   │   │
+│   │   └── instantInvoiceDTO.Bills
+│   │           .Where(b => b.BillStateType != Pending)
+│   │           .Any()
+│   │
+│   │       true
+│   │       └── ❌ throw "No se pueden crear facturas con
+│   │                     vencimientos que no estén pendientes."
+│   │           : Al crear factura nueva, todos los vencimientos
+│   │           : deben estar en estado "Pendiente" (BillStateType = 1)
+│   │           : No se puede crear con vencimientos ya cobrados
+│   │
+│   │       false
+│   │       └── ✅ todos los vencimientos están pendientes
+│   │
+│   │
+│   ├── STEP 6.3 → VALIDACIÓN DE NIF/NIE
+│   │   │
+│   │   ├── CONDICIÓN:
+│   │   │   participantDTO.IdentificationType == NIF
+│   │   │   || participantDTO.IdentificationType == NIE
+│   │   │
+│   │   │   : Solo valida formato si es NIF o NIE español
+│   │   │   : No valida para Pasaporte, CIF extranjero, etc.
+│   │   │
+│   │   │
+│   │   └── ValidateNIF(participantDTO.NIF)
+│   │
+│   │       ┌──────────────────────────────────────────────────┐
+│   │       │ ValidateNIF() (público)                           │
+│   │       ├──────────────────────────────────────────────────┤
+│   │       │                                                   │
+│   │       │ CHECK: NIF null o vacío                           │
+│   │       │   └── return (se permite, no lanza excepción)    │
+│   │       │                                                   │
+│   │       │ CHECK: IdentityDocument.IsNaturalPerson(NIF)      │
+│   │       │                                                   │
+│   │       │   true (persona física):                          │
+│   │       │   └── IdentityDocument.validateNIF_NIE(NIF)       │
+│   │       │       ├── false → ❌ throw "NIF/NIE Incorrecto"  │
+│   │       │       └── true  → ✅ válido                      │
+│   │       │                                                   │
+│   │       │   false (persona jurídica):                       │
+│   │       │   └── IdentityDocument.ValidateCIF(NIF)           │
+│   │       │       ├── false → ❌ throw "CIF Incorrecto"      │
+│   │       │       └── true  → ✅ válido                      │
+│   │       └──────────────────────────────────────────────────┘
+│   │
+│   │
+│   └── STEP 6.4 → VALIDACIÓN DIRECCIÓN EMISOR
+│       │
+│       ├── _companyService
+│       │       .GetCompanyAddressAsync(participantDTO.CompanyUID)
+│       │
+│       │   : Obtiene dirección fiscal de la empresa emisora
+│       │
+│       │   Resultado:
+│       │   └── addressCompany
+│       │       ├── RegionProvinceName (provincia)
+│       │       ├── RegionZipCode (código postal)
+│       │       └── Town (población)
+│       │
+│       │
+│       └── CHECK:
+│           addressCompany == null
+│           || RegionProvinceName vacío
+│           || RegionZipCode vacío
+│           || Town vacío
+│           │
+│           └── ❌ throw "Faltan datos obligatorios del emisor.
+│                         Accede a los datos de empresa y revisa
+│                         cód. postal, población y provincia"
+│
+│
+├── STEP 7 → CONSTRUCCIÓN DE LA ENTIDAD FACTURA
+│   │
+│   ├── STEP 7.1 → SNAPSHOT DATOS PERSONALES CLIENTE
+│   │   │
+│   │   └── _invoiceIssuedPersonDataService
+│   │           .PersistInvoiceIssuedPersonDataToParticipantAsync(
+│   │               participantDTO)
+│   │
+│   │       : Guarda una "foto" de los datos del cliente
+│   │       : en el momento exacto de la facturación
+│   │       : Si el cliente cambia de dirección después,
+│   │       : la factura conserva los datos originales
+│   │
+│   │       Resultado:
+│   │       └── invoiceIssuedPersonDataDTE
+│   │           ├── InvoiceIssuedPersonDataID
+│   │           │   : 0 → datos nuevos (no existían antes)
+│   │           │   : >0 → datos ya existentes (reutiliza)
+│   │           └── InvoiceIssuedPersonData
+│   │               : Objeto con nombre, NIF, dirección, etc.
+│   │
+│   │
+│   ├── STEP 7.2 → MAPEO DTO → DTE
+│   │   │
+│   │   └── invoiceIssuedDTE = _mapper.Map<InvoiceIssuedDTE>(
+│   │                              instantInvoiceDTO)
+│   │
+│   │       : AutoMapper convierte el DTO de entrada
+│   │       : a la entidad de base de datos
+│   │
+│   │       Campos mapeados automáticamente:
+│   │       ├── CompanyUID
+│   │       ├── ParticipantUID
+│   │       ├── SerieID
+│   │       ├── Series
+│   │       ├── OperationDate
+│   │       ├── ContractReference
+│   │       └── ... otros campos del DTO
+│   │
+│   │
+│   ├── STEP 7.3 → ASIGNACIÓN DE CAMPOS ADICIONALES
+│   │   │
+│   │   ├── invoiceIssuedDTE.ManagerUID = _credential.uidGestor
+│   │   │   : Gestor autenticado (del token JWT)
+│   │   │   : Sobreescribe cualquier valor del DTO
+│   │   │
+│   │   ├── invoiceIssuedDTE.InvoicingDate = DateTime.Now
+│   │   │   : Fecha de emisión = momento actual del servidor
+│   │   │   : No se puede manipular desde el cliente
+│   │   │
+│   │   └── invoiceIssuedDTE.InvoiceType = TpGFCloudInvoiceType.Issued
+│   │       : Tipo = Emitida (valor fijo)
+│   │       : Las rectificativas se crean por otro método
+│   │
+│   │
+│   ├── STEP 7.4 → VINCULAR DATOS PERSONALES
+│   │   │
+│   │   ├── CASO A: InvoiceIssuedPersonDataID == 0
+│   │   │   : Datos personales NUEVOS (primera vez que se factura
+│   │   │   : a este cliente con estos datos exactos)
+│   │   │   │
+│   │   │   └── invoiceIssuedDTE.invoiceIssuedPersonData =
+│   │   │           invoiceIssuedPersonDataDTE.InvoiceIssuedPersonData
+│   │   │       : Asigna como propiedad de navegación
+│   │   │       : EF Core creará el registro automáticamente
+│   │   │       : al hacer PersistAsync de la factura
+│   │   │
+│   │   │
+│   │   └── CASO B: InvoiceIssuedPersonDataID > 0
+│   │       : Datos personales EXISTENTES (ya se facturó antes
+│   │       : con los mismos datos, reutiliza el registro)
+│   │       │
+│   │       └── invoiceIssuedDTE.InvoiceIssuedPersonDataID =
+│   │               invoiceIssuedPersonDataDTE.InvoiceIssuedPersonDataID
+│   │           : Asigna solo la FK
+│   │           : No crea registro nuevo
+│   │
+│   │
+│   └── STEP 7.5 → VINCULAR BORRADOR (opcional)
+│       │
+│       └── CHECK: instantInvoiceDTO.DraftInvoiceIssuedID != null
+│           │
+│           └── invoiceIssuedDTE.DraftInvoiceIssuedID =
+│                   instantInvoiceDTO.DraftInvoiceIssuedID
+│               : Mantiene trazabilidad borrador → factura
+│
+│
+├── STEP 8 → CÁLCULO DE IMPORTES
+│   │
+│   ├── STEP 8.1 → CALCULAR CONCEPTOS
+│   │   │
+│   │   └── _billConceptService
+│   │           .CalculateInstantBillConceptAmountsAsync(
+│   │               companyDTE,
+│   │               participantDTO,
+│   │               instantInvoiceDTO.BillConcepts)
+│   │
+│   │       : Calcula para CADA línea de factura:
+│   │
+│   │       ┌────────────────────────────────────────────────┐
+│   │       │ Por cada concepto:                              │
+│   │       │                                                 │
+│   │       │ 1. Obtiene impuesto IVA del concepto (VATID)    │
+│   │       │ 2. Obtiene retención empresa (TaxUID)           │
+│   │       │                                                 │
+│   │       │ 3. BaseAmount =                                 │
+│   │       │    (Units × Price) × (1 - %Descuento/100)       │
+│   │       │                                                 │
+│   │       │ 4. VATAmount =                                  │
+│   │       │    BaseAmount × VATPercent / 100                 │
+│   │       │                                                 │
+│   │       │ 5. WithholdingAmount =                          │
+│   │       │    BaseAmount × WithholdingPercent / 100         │
+│   │       │    (solo si participantDTO.IsWithHoldingTax)     │
+│   │       │                                                 │
+│   │       │ 6. Amount =                                     │
+│   │       │    BaseAmount + VATAmount - WithholdingAmount    │
+│   │       │                                                 │
+│   │       │ 7. Redondeo a 2 decimales                       │
+│   │       └────────────────────────────────────────────────┘
+│   │
+│   │       Resultado:
+│   │       └── List<BillConceptDTE> billConceptDTEs
+│   │           : Lista con importes calculados
+│   │
+│   │
+│   ├── STEP 8.2 → CALCULAR TOTAL FACTURA
+│   │   │
+│   │   └── invoiceIssuedDTE.TotalAmount =
+│   │           billConceptDTEs.Sum(d => d.Amount)
+│   │
+│   │       : Suma de todos los importes finales de cada línea
+│   │       : Incluye IVA y descuenta retenciones
+│   │
+│   │       Ej:
+│   │       ├── Línea 1: Amount = 605.00  (500 base + 105 IVA)
+│   │       ├── Línea 2: Amount = 605.00  (500 base + 105 IVA)
+│   │       └── TotalAmount = 1210.00
+│   │
+│   │
+│   ├── STEP 8.3 → VALIDAR TOTAL vs VENCIMIENTOS
+│   │   │
+│   │   └── CHECK:
+│   │       invoiceIssuedDTE.TotalAmount !=
+│   │           instantInvoiceDTO.Bills.Sum(b => b.Amount)
+│   │       │
+│   │       └── ❌ throw "El importe de la factura no coincide
+│   │                     con el importe de los vencimientos."
+│   │
+│   │       Ej incorrecto:
+│   │       ├── TotalAmount = 1210.00
+│   │       ├── Vencimiento 1: 600.00
+│   │       ├── Vencimiento 2: 600.00
+│   │       └── Suma vencimientos: 1200.00 ≠ 1210.00 → ❌
+│   │
+│   │       Ej correcto:
+│   │       ├── TotalAmount = 1210.00
+│   │       ├── Vencimiento 1: 605.00
+│   │       ├── Vencimiento 2: 605.00
+│   │       └── Suma vencimientos: 1210.00 == 1210.00 → ✅
+│   │
+│   │
+│   └── STEP 8.4 → VALIDAR TOTAL NO NEGATIVO
+│       │
+│       └── CHECK: invoiceIssuedDTE.TotalAmount < 0
+│           │
+│           └── ❌ throw "El importe total de la factura
+│                         no puede ser negativo."
+│               : Las facturas con importe negativo son
+│               : rectificativas y se crean por otro flujo
+│               : (CreateRectifyInvoiceAsync)
+│
+│
+├── STEP 9 → PERSISTENCIA (dentro de la transacción)
+│   │
+│   │   ┌──────────────────────────────────────────────────────┐
+│   │   │ TRANSACCIÓN ATÓMICA                                   │
+│   │   │ [Transactional(REQUIRED_NEW, DBContext)]               │
+│   │   │                                                       │
+│   │   │ Si cualquier PersistAsync falla:                      │
+│   │   │   → ROLLBACK de todo                                 │
+│   │   │   → No queda factura huérfana                        │
+│   │   │   → No quedan vencimientos sin factura               │
+│   │   │   → No quedan conceptos sin factura                  │
+│   │   │                                                       │
+│   │   │ Si todo OK:                                           │
+│   │   │   → COMMIT atómico de las 4 operaciones              │
+│   │   └──────────────────────────────────────────────────────┘
+│   │
+│   │
+│   ├── STEP 9.1 → GUARDAR FACTURA
+│   │   │
+│   │   └── invoiceIssuedDTE = await
+│   │           _invoiceIssuedRepository.PersistAsync(invoiceIssuedDTE)
+│   │
+│   │       Genera automáticamente:
+│   │       ├── InvoiceIssuedID (PK autoincremental)
+│   │       ├── InvoiceIssuedUID (GUID único)
+│   │       └── InvoiceIssuedPersonData (si era nuevo, CASO A)
+│   │
+│   │       ⚠️ InvoiceNumber = null
+│   │       : El número de factura NO se asigna aquí
+│   │       : Se asigna después en SetInvoiceNumberProcessAsync
+│   │       : mediante un proceso asíncrono separado
+│   │       : para evitar conflictos de concurrencia
+│   │       : con el contador de la serie
+│   │
+│   │
+│   ├── STEP 9.2 → GUARDAR VENCIMIENTOS
+│   │   │
+│   │   └── await _billIssuedService
+│   │           .SaveInstantBillIssuedToInvoiceAsync(
+│   │               participantDTO,
+│   │               invoiceIssuedDTE,
+│   │               instantInvoiceDTO.Bills)
+│   │
+│   │       Para cada vencimiento en Bills:
+│   │       ┌─────────────────────────────────────────────┐
+│   │       │ BillIssuedDTE                                │
+│   │       │ ├── InvoiceIssuedID = factura recién creada  │
+│   │       │ ├── ManagerUID = gestor autenticado           │
+│   │       │ ├── PayerUID = pagador del cliente            │
+│   │       │ ├── BillDate = fecha vencimiento              │
+│   │       │ ├── Amount = importe del vencimiento          │
+│   │       │ ├── BillStateType = 1 (Pendiente)             │
+│   │       │ ├── PaidOut = 0 (nada cobrado)                │
+│   │       │ ├── PaymentMethodType = método pago           │
+│   │       │ ├── PaymentBankAccount = cuenta bancaria      │
+│   │       │ └── IBANSEPA = IBAN                           │
+│   │       └─────────────────────────────────────────────┘
+│   │
+│   │
+│   ├── STEP 9.3 → GUARDAR CONCEPTOS
+│   │   │
+│   │   └── billConceptDTEs = await _billConceptService
+│   │           .SaveBillConceptsToInvoiceAsync(
+│   │               invoiceIssuedDTE,
+│   │               billConceptDTEs)
+│   │
+│   │       Para cada concepto:
+│   │       ┌─────────────────────────────────────────────┐
+│   │       │ BillConceptDTE                               │
+│   │       │ ├── InvoiceIssuedID = factura recién creada  │
+│   │       │ ├── ConceptID = ID del concepto maestro      │
+│   │       │ ├── Description = texto descriptivo           │
+│   │       │ ├── Units = unidades                          │
+│   │       │ ├── Price = precio unitario                   │
+│   │       │ ├── PercentDiscount = % descuento             │
+│   │       │ ├── BaseAmount = base imponible               │
+│   │       │ ├── VATID = ID impuesto IVA                   │
+│   │       │ ├── VATPercent = % IVA                        │
+│   │       │ ├── VATAmount = cuota IVA                     │
+│   │       │ ├── WithholdingID = ID retención              │
+│   │       │ ├── WithholdingPercent = % retención          │
+│   │       │ ├── WithholdingAmount = cuota retención       │
+│   │       │ ├── Amount = importe final línea              │
+│   │       │ ├── Order = orden presentación                │
+│   │       │ └── Type = WithAmount / OnlyDescription       │
+│   │       └─────────────────────────────────────────────┘
+│   │
+│   │       Retorna:
+│   │       └── billConceptDTEs actualizados (con IDs de BD)
+│   │
+│   │
+│   └── STEP 9.4 → GUARDAR IMPUESTOS
+│       │
+│       └── var invoiceTaxDTEs = await _invoiceTaxService
+│               .SaveInvoiceTaxesToInvoiceAsync(
+│                   invoiceIssuedDTE,
+│                   billConceptDTEs)
+│
+│           : Agrupa los conceptos por tipo y porcentaje de impuesto
+│           : Crea registros resumen de impuestos
+│
+│           Ej con 3 conceptos:
+│           ┌────────────────────────────────────────────────────┐
+│           │ Concepto 1: IVA 21%, Base 500  → Cuota 105        │
+│           │ Concepto 2: IVA 21%, Base 300  → Cuota 63         │
+│           │ Concepto 3: IVA 10%, Base 200  → Cuota 20         │
+│           │                                                    │
+│           │ Resultado agrupado:                                │
+│           │ ┌──────────────────────────────────────────────┐   │
+│           │ │ InvoiceTaxDTE #1                              │   │
+│           │ │ ├── TaxType = IVA                             │   │
+│           │ │ ├── TaxPercent = 21%                          │   │
+│           │ │ ├── TaxBase = 800 (500 + 300)                 │   │
+│           │ │ └── TaxAmount = 168 (105 + 63)                │   │
+│           │ │                                               │   │
+│           │ │ InvoiceTaxDTE #2                              │   │
+│           │ │ ├── TaxType = IVA                             │   │
+│           │ │ ├── TaxPercent = 10%                          │   │
+│           │ │ ├── TaxBase = 200                             │   │
+│           │ │ └── TaxAmount = 20                            │   │
+│           │ └──────────────────────────────────────────────┘   │
+│           └────────────────────────────────────────────────────┘
+│
+│
+└── RETURN
+    │
+    └── InvoiceIssuedDTE
+        : Entidad factura completa persistida en BD
+
+        Estado del objeto retornado:
+        ┌─────────────────────────────────────────────────────┐
+        │ InvoiceIssuedID    = 12345 (generado por BD)        │
+        │ InvoiceIssuedUID   = "GUID-xxxx-xxxx" (generado)   │
+        │ InvoiceNumber      = null ⚠️ (pendiente)           │
+        │ Series             = "A"                            │
+        │ SerieID            = 7                              │
+        │ CompanyUID         = "COMPANY-1"                    │
+        │ ParticipantUID     = "PART-1"                       │
+        │ ManagerUID         = "MANAGER-1" (de _credential)   │
+        │ InvoicingDate      = 2025-05-05 10:30:00 (Now)      │
+        │ OperationDate      = 2025-05-01 (del DTO)           │
+        │ InvoiceType        = 1 (Emitida)                    │
+        │ TotalAmount        = 1210.00                        │
+        │ DraftInvoiceID     = null | 456                     │
+        │ InvoiceIssuedPersonDataID = 789                     │
+        │ ContractReference  = "REF-001" | null               │
+        │ IsInvoiceCorrected = false                          │
+        │ CorrectiveInvoiceID = null                          │
+        │ IsSendToInvoicing  = false                          │
+        └─────────────────────────────────────────────────────┘
+
+        Entidades relacionadas creadas:
+        ┌─────────────────────────────────────────────────────┐
+        │                                                     │
+        │  InvoiceIssued (1)                                  │
+        │       │                                             │
+        │       ├── BillIssued (N vencimientos)               │
+        │       │   ├── Vencimiento 1: 605.00 - Pendiente     │
+        │       │   └── Vencimiento 2: 605.00 - Pendiente     │
+        │       │                                             │
+        │       ├── BillConcept (N conceptos)                 │
+        │       │   ├── Concepto 1: Cuota mensual 500€        │
+        │       │   │   └── IVA 21% = 105€                   │
+        │       │   └── Concepto 2: Servicio extra 500€       │
+        │       │       └── IVA 21% = 105€                   │
+        │       │                                             │
+        │       ├── InvoiceTax (N impuestos agrupados)        │
+        │       │   └── IVA 21%: Base 1000 / Cuota 210        │
+        │       │                                             │
+        │       └── InvoiceIssuedPersonData (1 snapshot)      │
+        │           └── Datos cliente al facturar              │
+        │                                                     │
+        └─────────────────────────────────────────────────────┘
+
+        ⚠️ SIGUIENTE PASO (fuera de este método):
+        ┌─────────────────────────────────────────────────────┐
+        │ El controller llama después a:                      │
+        │                                                     │
+        │ SendSetInvoiceNumberProcessRequestAsync()           │
+        │   │                                                 │
+        │   └── Lanza proceso asíncrono (cola de mensajes)    │
+        │       │                                             │
+        │       └── Ejecuta SetInvoiceNumberProcessAsync()    │
+        │           │                                         │
+        │           ├── Obtiene max InvoiceNumber de BD        │
+        │           ├── Sincroniza contador de serie           │
+        │           ├── Incrementa contador                    │
+        │           ├── Asigna InvoiceNumber a la factura      │
+        │           ├── Persiste factura con número             │
+        │           └── Genera asientos contables              │
+        │                                                     │
+        │ Razón de separación:                                │
+        │ ├── Evitar conflictos de concurrencia                │
+        │ ├── Múltiples facturas simultáneas                   │
+        │ └── El contador de serie es recurso compartido       │
+        └─────────────────────────────────────────────────────┘
+
+
+SaveInstantInvoiceAsync
+: Valida requisitos Verifactu/TBAI
+: Valida borrador no duplicado
+: Obtiene y valida empresa + cliente
+: Resuelve serie al ejercicio actual
+: Valida conceptos con descripción
+: Valida situación judicial del cliente
+: Valida vencimientos pendientes
+: Valida NIF/NIE/CIF del cliente
+: Valida dirección fiscal del emisor
+: Guarda snapshot datos personales cliente
+: Mapea DTO a entidad de BD
+: Calcula importes fiscales de cada línea
+: Valida total = suma vencimientos
+: Valida total no negativo
+: Persiste factura (sin número)
+: Persiste vencimientos
+: Persiste conceptos
+: Persiste desglose impositivo
+: Devuelve factura lista para numerar

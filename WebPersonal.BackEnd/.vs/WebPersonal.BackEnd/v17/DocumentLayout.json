@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\webpersonal.backend\\webpersonal.backend\\sartup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|solutionrelative:webpersonal.backend\\sartup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\webpersonal.backend\\webpersonal.backend\\controllers\\perfilpersonalcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|solutionrelative:webpersonal.backend\\controllers\\perfilpersonalcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\webpersonal.backend\\webpersonal.backend\\sartup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|solutionrelative:webpersonal.backend\\sartup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{40766DBB-3529-426E-8164-73F52F2BA460}|WebPersonal.BackEnd\\WebPersonal.BackEnd.csproj|d:\\users\\ext.luis.aguado\\documents\\github\\csharp\\webpersonal.backend\\webpersonal.backend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -21,31 +21,151 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 437,
-          "SelectedChildIndex": 1,
+          "DockedWidth": 574,
+          "SelectedChildIndex": 30,
           "Children": [
             {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{cce594b6-0c39-4442-ba28-10c64ac7e89f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:131:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:132:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:134:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:133:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:133:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:13:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{65ddf8c3-8f89-4077-a6c6-dbb8853aab13}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:2:0:{65ddf8c3-8f89-4077-a6c6-dbb8853aab13}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:17:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:18:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:19:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:20:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:21:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:22:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:23:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:24:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:25:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:26:0:{2456bd12-ecf7-4988-a4a6-67d49173f565}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:136:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:137:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:140:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "PerfilPersonalController.cs",
               "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Controllers\\PerfilPersonalController.cs",
               "RelativeDocumentMoniker": "WebPersonal.BackEnd\\Controllers\\PerfilPersonalController.cs",
               "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Controllers\\PerfilPersonalController.cs",
               "RelativeToolTip": "WebPersonal.BackEnd\\Controllers\\PerfilPersonalController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAA6AAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-04T09:18:36.585Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "Sartup.cs",
               "DocumentMoniker": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Sartup.cs",
               "RelativeDocumentMoniker": "WebPersonal.BackEnd\\Sartup.cs",
               "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Sartup.cs",
               "RelativeToolTip": "WebPersonal.BackEnd\\Sartup.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAACYAAAAQAAAAAAAAAA==",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAACYAAAAQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-04T09:10:07.727Z",
               "EditorCaption": ""
@@ -58,10 +178,24 @@
               "RelativeDocumentMoniker": "WebPersonal.BackEnd\\Program.cs",
               "ToolTip": "D:\\Users\\ext.luis.aguado\\Documents\\GitHub\\CSharp\\WebPersonal.BackEnd\\WebPersonal.BackEnd\\Program.cs",
               "RelativeToolTip": "WebPersonal.BackEnd\\Program.cs",
-              "ViewState": "AgIAABgAAAAAAAAAAAAkwC8AAAArAAAAAAAAAA==",
+              "ViewState": "AgIAACEAAAAAAAAAAAAAAC8AAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-05-04T09:06:10.501Z",
               "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 461,
+          "SelectedChildIndex": -1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
             }
           ]
         }

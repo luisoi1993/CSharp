@@ -1,0 +1,463 @@
+Resumen completo de cambios - Redmine RecurringInvoiceItemAdditionalData
+Rama: luis/feature/93050b/base
+Repositorio: IESA.TC.Invoices.V2
+---
+DESCRIPCIÓN DEL REDMINE
+Se crea una nueva tabla RecurringInvoiceItemAdditionalData que guarda datos exclusivos de los conceptos de facturas periódicas a inquilinos (IsServiceFee, IsBillable, IsRentReview). Estos campos por defecto son false y no puede fallar si no existen registros en la tabla.
+La tabla se alimenta cuando se crea/edita una factura periódica (POST/PUT de RecurringInvoice). En los GET, se devuelven los 3 campos en el objeto RecurringInvoiceItemDTO.
+---
+ARCHIVOS CREADOS/MODIFICADOS
+1. IESA.TC.Invoices.V2\Models\Base\RecurringInvoiceItemAdditionalDataBase.cs (NUEVO) 
+
+using IESA.Common.NetCore.Libs.ORM.Wrapper;
+using Libs.Data.Attributes;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using static IESA.TC.NetCore.Utilities.Models.Types.TpIESACSAutoFilters;
+
+public class RecurringInvoiceItemAdditionalDataBase : IESAAuditableEntity
+{
+    [Key]
+    [Column(Order = 0)]
+    public long RecurringInvoiceItemAdditionalDataID { get; set; }
+
+    [Required]
+    [MaxLength(100)]
+    [AutoFilterField(TypeFilter.UidManager)]
+    [Column(Order = 1)]
+    public string ManagerUID { get; set; } = string.Empty;
+
+    [Required]
+    [ForeignKey(nameof(RecurringInvoiceItemID))]
+    [Column(Order = 2)]
+    public long RecurringInvoiceItemID { get; set; }
+
+    [Required]
+    [Column(Order = 3)]
+    public bool IsServiceFee { get; set; } = false;
+
+    [Required]
+    [Column(Order = 4)]
+    public bool IsBillable { get; set; } = false;
+
+    [Required]
+    [Column(Order = 5)]
+    public bool IsRentReview { get; set; } = false;
+
+    [Required]
+    [MaxLength(100)]
+    [Uid("RIAD", "INV", "-")]
+    [Column(Order = 6)]
+    public string RecurringInvoiceItemAdditionalDataUID { get; set; } = string.Empty;
+} 
+
+EXPLICACIÓN:
+•	Hereda de IESAAuditableEntity: aporta campos de auditoría automáticos (CreatedAt, ModifiedAt, InactiveAt, CreatedByUserUID, ModifiedByUserUID, InactiveByUserUID, IsActive).
+•	RecurringInvoiceItemAdditionalDataID: Clave primaria autoincremental (bigint identity).
+•	ManagerUID: Identifica al gestor/tenant. El atributo [AutoFilterField(TypeFilter.UidManager)] hace que TODAS las queries generadas automáticamente se filtren por este campo. Es el mecanismo de multitenancy del proyecto.
+•	RecurringInvoiceItemID: Foreign Key hacia la tabla RecurringInvoiceItem. Relaciona cada registro adicional con su item de cuota correspondiente.
+•	IsServiceFee, IsBillable, IsRentReview: Los 3 campos booleanos del Redmine. Valor por defecto false para que si no se envían en el JSON del frontend, no falle.
+•	RecurringInvoiceItemAdditionalDataUID: UID único generado automáticamente por el atributo [Uid("RIAD", "INV", "-")]. El framework lo genera al hacer PersistAsync. Formato ejemplo: "RIAD-INV-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".
+---
+2. IESA.TC.Invoices.V2\Models\Entities\RecurringInvoiceItemAdditionalDataEntity.cs (NUEVO)
+
+using IESA.Common.NetCore.Libs.ORM.Wrapper.interfaces;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace IESA.TC.Invoices.V2.Models.Entities
+{
+    [Table("RecurringInvoiceItemAdditionalData")]
+    [Index(nameof(ManagerUID), nameof(IsActive), Name = "IX_RecurringInvoiceItemAdditionalDataManagerUID")]
+    [Index(nameof(ManagerUID), nameof(RecurringInvoiceItemID), nameof(IsActive), Name = "IX_RecurringInvoiceItemAdditionalDataManagerUIDItemID")]
+    [Index(nameof(RecurringInvoiceItemAdditionalDataUID), IsUnique = true)]
+    public class RecurringInvoiceItemAdditionalDataEntity : RecurringInvoiceItemAdditionalDataBase, IIESAEFEntity<IESAAuditableEntity>
+    {
+        [ForeignKey(nameof(RecurringInvoiceItemID))]
+        public virtual RecurringInvoiceItemEntity? RecurringInvoiceItem { get; set; }
+    }
+}
+
+EXPLICACIÓN:
+•	[Table("RecurringInvoiceItemAdditionalData")]: Mapea esta clase a la tabla física con ese nombre exacto en SQL Server.
+•	Índice IX_RecurringInvoiceItemAdditionalDataManagerUID: Optimiza queries que filtran por ManagerUID + IsActive (que son TODAS porque el AutoFilter lo aplica siempre).
+•	Índice IX_RecurringInvoiceItemAdditionalDataManagerUIDItemID: Optimiza la query principal que busca por ManagerUID + RecurringInvoiceItemID + IsActive (la que usamos en GetByRecurringInvoiceItemIDAsync).
+•	Índice único en RecurringInvoiceItemAdditionalDataUID: Garantiza que no haya UIDs duplicados.
+•	Implementa IIESAEFEntity<IESAAuditableEntity>: Interfaz del framework que marca esta clase como entidad gestionada por Entity Framework Core.
+•	Propiedad de navegación RecurringInvoiceItem: Permite a EF Core entender la relación FK. Es virtual para soporte de lazy loading. Es nullable (?) porque no siempre se necesita cargar la entidad relacionada.
+---
+3. IESA.TC.Invoices.V2\Models\DTE\RecurringInvoiceItemAdditionalDataDTE.cs (NUEVO)
+using IESA.TC.Invoices.V2.Models.Base;
+using IESA.TC.Invoices.V2.Models.Entities;
+
+namespace IESA.TC.Invoices.V2.Models.DTE
+{
+    public class RecurringInvoiceItemAdditionalDataDTE : RecurringInvoiceItemAdditionalDataBase, IIESADte<RecurringInvoiceItemAdditionalDataEntity>
+    {
+        public RecurringInvoiceItemAdditionalDataEntity? RecurringInvoiceItemAdditionalData { get; set; }
+
+        public RecurringInvoiceItemAdditionalDataEntity TransformToEntity()
+        {
+            return null;
+        }
+    }
+} 
+
+EXPLICACIÓN:
+•	El DTE (Data Transfer Entity) es el objeto que viaja entre la capa de repositorio y la capa de servicio. Hereda las mismas propiedades del Base pero NO tiene los atributos de EF Core ([Table], [Index]).
+•	Propiedad RecurringInvoiceItemAdditionalData: El framework la usa internamente para asociar la entity. El nombre debe coincidir con el nombre de la tabla.
+•	TransformToEntity() retorna null: Este es el patrón que siguen TODOS los DTEs del proyecto. El framework NO usa este método; usa el Entity tracking de EF Core directamente mediante el BaseRepository.
+---
+4. IESA.TC.Invoices.V2\Models\DTO\RecurringInvoiceItemDTO.cs (MODIFICADO)
+Se añadieron estas 3 líneas al final de la clase:
+
+public bool IsServiceFee { get; set; } = false;
+public bool IsBillable { get; set; } = false;
+public bool IsRentReview { get; set; } = false; 
+
+EXPLICACIÓN:
+•	El DTO es lo que el frontend envía y recibe vía JSON en la API REST.
+•	Por defecto false: Si el frontend no envía estos campos en el JSON, System.Text.Json los deserializa como false automáticamente. Cumple el requisito del Redmine: "No puede fallar si esos campos no están".
+•	Estos campos NO están en la tabla RecurringInvoiceItem, están en RecurringInvoiceItemAdditionalData. Se "enriquecen" en el servicio al hacer GET y se "extraen" al hacer POST/PUT.
+---
+5. IESA.TC.Invoices.V2\Interfaces\RecurringInvoiceItemAdditionalData\IRecurringInvoiceItemAdditionalDataRepository.cs (NUEVO)
+
+using IESA.Common.NetCore.Libs.ORM.Wrapper.Interfaces;
+using IESA.TC.Invoices.V2.Models.DTE;
+using IESA.TC.Invoices.V2.Models.Entities;
+
+namespace IESA.TC.Invoices.V2.Interfaces.RecurringInvoiceItemAdditionalData
+{
+    public interface IRecurringInvoiceItemAdditionalDataRepository : IBaseRepository<RecurringInvoiceItemAdditionalDataEntity>
+    {
+        Task<RecurringInvoiceItemAdditionalDataDTE?> GetByRecurringInvoiceItemIDAsync(long recurringInvoiceItemID);
+    }
+}
+
+EXPLICACIÓN:
+•	Hereda de IBaseRepository<RecurringInvoiceItemAdditionalDataEntity>: Aporta automáticamente PersistAsync, GetByIdAsync, DeactivateAsync, QueryAsync, etc.
+•	Declara GetByRecurringInvoiceItemIDAsync: Método específico para buscar el registro adicional de un item. Retorna nullable (?) porque puede que no exista registro para un item dado.
+---
+6. IESA.TC.Invoices.V2\Interfaces\RecurringInvoiceItemAdditionalData\IRecurringInvoiceItemAdditionalDataService.cs (NUEVO)
+
+using IESA.Common.NetCore.Libs.ORM.Wrapper.Interfaces;
+using IESA.TC.Invoices.V2.Models.DTE;
+using IESA.TC.Invoices.V2.Models.Entities;
+
+namespace IESA.TC.Invoices.V2.Interfaces.RecurringInvoiceItemAdditionalData
+{
+    public interface IRecurringInvoiceItemAdditionalDataService : IBaseService<RecurringInvoiceItemAdditionalDataEntity, RecurringInvoiceItemAdditionalDataDTE>
+    {
+        Task<RecurringInvoiceItemAdditionalDataDTE?> GetByRecurringInvoiceItemIDAsync(long recurringInvoiceItemID);
+        Task SaveRecurringInvoiceItemAdditionalDataAsync(RecurringInvoiceItemAdditionalDataDTE additionalDataDTE);
+    }
+} 
+
+EXPLICACIÓN:
+•	Hereda de IBaseService: Aporta PersistAsync, GetByIdAsync, GetPagedListAsync, etc.
+•	GetByRecurringInvoiceItemIDAsync: Para obtener los datos adicionales en el GET.
+•	SaveRecurringInvoiceItemAdditionalDataAsync: Para guardar/actualizar los datos adicionales en el POST/PUT. Asigna el ManagerUID internamente.
+---
+7. IESA.TC.Invoices.V2\Infrastructure\RecurringInvoiceItemAdditionalData\RecurringInvoiceItemAdditionalDataRepository.cs (NUEVO)
+using IESA.Common.NetCore.Libs.Data.AutoFilter;
+using IESA.Common.NetCore.Libs.ORM.Wrapper;
+using IESA.Common.NetCore.Libs.ORM.Wrapper.interfaces;
+using IESA.TC.Invoices.V2.Interfaces.RecurringInvoiceItemAdditionalData;
+using IESA.TC.Invoices.V2.Models;
+using IESA.TC.Invoices.V2.Models.DTE;
+using IESA.TC.Invoices.V2.Models.Entities;
+using IESA.TC.NetCore.Middleware.Context.Model;
+using IESA.TC.NetCore.Utilities.Models;
+using Microsoft.Extensions.Logging;
+
+namespace IESA.TC.Invoices.V2.Infrastructure.RecurringInvoiceItemAdditionalData
+{
+    public class RecurringInvoiceItemAdditionalDataRepository : BaseRepository<RecurringInvoiceItemAdditionalDataEntity>, IRecurringInvoiceItemAdditionalDataRepository
+    {
+        public RecurringInvoiceItemAdditionalDataRepository(DBContext pContext, ILogger<RecurringInvoiceItemAdditionalDataRepository> pLogger, IMapper pMapper, TCContext pTCContext, IAutoFilterGenerator pAutoFilterGenerator)
+           : base(pContext, pLogger, pMapper, pTCContext, pAutoFilterGenerator)
+        { }
+
+        public async Task<RecurringInvoiceItemAdditionalDataDTE?> GetByRecurringInvoiceItemIDAsync(long recurringInvoiceItemID)
+        {
+            _logger.LogInformation("{method} --> Start", nameof(GetByRecurringInvoiceItemIDAsync));
+
+            string sql = $@"SELECT * FROM RecurringInvoiceItemAdditionalData
+                            WHERE RecurringInvoiceItemID = {recurringInvoiceItemID} AND IsActive = 1";
+
+            IEnumerable<RecurringInvoiceItemAdditionalDataDTE> result = await QueryAsync<RecurringInvoiceItemAdditionalDataDTE>(sql);
+
+            _logger.LogInformation("{method} --> End", nameof(GetByRecurringInvoiceItemIDAsync));
+
+            return result.FirstOrDefault();
+        }
+    }
+}
+
+EXPLICACIÓN:
+•	Hereda de BaseRepository<RecurringInvoiceItemAdditionalDataEntity>: Da acceso al DBContext (EF Core) y a Dapper para queries raw.
+•	Constructor: Recibe las dependencias estándar del framework (contexto BD, logger, mapper, contexto de tenant, generador de autofiltros).
+•	GetByRecurringInvoiceItemIDAsync: Query SQL directa con Dapper (QueryAsync). Filtra por RecurringInvoiceItemID y IsActive = 1 (soft delete: los registros "borrados" tienen IsActive = 0). Devuelve FirstOrDefault() porque solo hay un registro adicional por cada item.
+•	NO filtra por ManagerUID aquí porque esta query se llama internamente desde el servicio que ya está en contexto del tenant correcto. Además el RecurringInvoiceItemID es único globalmente.
+---
+8. IESA.TC.Invoices.V2\Infrastructure\RecurringInvoiceItemAdditionalData\RecurringInvoiceItemAdditionalDataService.cs (NUEVO)
+
+using IESA.Common.NetCore.Libs.ORM.Wrapper;
+using IESA.TC.Invoices.V2.Interfaces.RecurringInvoiceItemAdditionalData;
+using IESA.TC.Invoices.V2.Models;
+using IESA.TC.Invoices.V2.Models.DTE;
+using IESA.TC.Invoices.V2.Models.Entities;
+using IESA.TC.NetCore.Middleware.Context.Model;
+using IESA.TC.NetCore.Utilities.Models;
+using Microsoft.Extensions.Logging;
+
+namespace IESA.TC.Invoices.V2.Infrastructure.RecurringInvoiceItemAdditionalData
+{
+    public class RecurringInvoiceItemAdditionalDataService : BaseService<RecurringInvoiceItemAdditionalDataEntity, RecurringInvoiceItemAdditionalDataDTE>, IRecurringInvoiceItemAdditionalDataService
+    {
+        private readonly IRecurringInvoiceItemAdditionalDataRepository _repository;
+        private readonly TCContext _credential;
+
+        public RecurringInvoiceItemAdditionalDataService(
+            ILogger<RecurringInvoiceItemAdditionalDataService> pLogger,
+            IMapper pMapper,
+            DBContext pDbContext,
+            TCContext credential,
+            IRecurringInvoiceItemAdditionalDataRepository repository)
+            : base(pMapper, pLogger, pDbContext, repository)
+        {
+            _repository = repository;
+            _credential = credential;
+        }
+
+        public async Task<RecurringInvoiceItemAdditionalDataDTE?> GetByRecurringInvoiceItemIDAsync(long recurringInvoiceItemID)
+        {
+            _logger.LogInformation("{method} --> Start", nameof(GetByRecurringInvoiceItemIDAsync));
+
+            var result = await _repository.GetByRecurringInvoiceItemIDAsync(recurringInvoiceItemID);
+
+            _logger.LogInformation("{method} --> End", nameof(GetByRecurringInvoiceItemIDAsync));
+
+            return result;
+        }
+
+        public async Task SaveRecurringInvoiceItemAdditionalDataAsync(RecurringInvoiceItemAdditionalDataDTE additionalDataDTE)
+        {
+            _logger.LogInformation("{method} --> Start", nameof(SaveRecurringInvoiceItemAdditionalDataAsync));
+
+            additionalDataDTE.ManagerUID = _credential.uidGestor;
+            await PersistAsync(additionalDataDTE);
+
+            _logger.LogInformation("{method} --> End", nameof(SaveRecurringInvoiceItemAdditionalDataAsync));
+        }
+    }
+}
+
+EXPLICACIÓN:
+•	Hereda de BaseService: Da acceso a PersistAsync (que gestiona INSERT o UPDATE según si el ID es 0 o no), GetByIdAsync, DeactivateAsync, etc.
+•	_credential.uidGestor: Es el UID del gestor/tenant del usuario autenticado. Se obtiene del token JWT que viene en la request HTTP.
+•	GetByRecurringInvoiceItemIDAsync: Simplemente delega al repositorio. La capa de servicio existe para añadir lógica de negocio si fuera necesario en el futuro.
+•	SaveRecurringInvoiceItemAdditionalDataAsync: ANTES de persistir, asigna el ManagerUID. Sin esto, el INSERT falla porque ManagerUID es NOT NULL en la BD. PersistAsync del BaseService:
+•	Si RecurringInvoiceItemAdditionalDataID == 0 → hace INSERT (y el framework genera el UID automáticamente por el atributo [Uid]).
+•	Si RecurringInvoiceItemAdditionalDataID != 0 → hace UPDATE.
+•	También gestiona automáticamente CreatedAt/ModifiedAt y CreatedByUserUID/ModifiedByUserUID.
+---
+9. IESA.TC.Invoices.V2\Models\DBContext.cs (MODIFICADO)
+Se añadió esta línea dentro de la región #region Entities:
+
+public virtual DbSet<RecurringInvoiceItemAdditionalDataEntity> RecurringInvoiceItemAdditionalDatas { get; set; }
+
+EXPLICACIÓN:
+•	Registra la entidad en Entity Framework Core. Sin esto:
+•	EF Core no sabe que existe la tabla.
+•	No puede generar migraciones.
+•	No puede hacer operaciones CRUD (Add, Update, SaveChanges) sobre esta entidad.
+•	El PersistAsync del BaseService fallaría.
+---
+10. IESA.TC.Invoices.V2\Infrastructure\ServiceInitialization.cs (MODIFICADO)
+Se añadieron estos 2 usings al inicio del archivo:
+using IESA.TC.Invoices.V2.Interfaces.RecurringInvoiceItemAdditionalData;
+using IESA.TC.Invoices.V2.Infrastructure.RecurringInvoiceItemAdditionalData; 
+
+Y estas 2 líneas dentro del método Initialize:
+
+services.AddScoped<IRecurringInvoiceItemAdditionalDataRepository, RecurringInvoiceItemAdditionalDataRepository>();
+services.AddScoped<IRecurringInvoiceItemAdditionalDataService, RecurringInvoiceItemAdditionalDataService>();
+
+EXPLICACIÓN:
+•	Registra las implementaciones en el contenedor de inyección de dependencias (DI) de ASP.NET Core.
+•	AddScoped: Se crea una nueva instancia por cada request HTTP. Compartida dentro del mismo request.
+•	Sin estas líneas, cuando RecurringInvoiceService pide IRecurringInvoiceItemAdditionalDataService en su constructor, el framework no sabe qué clase instanciar y lanza una excepción al arrancar: "Unable to resolve service for type IRecurringInvoiceItemAdditionalDataService".
+•	El orden es: primero el Repository, luego el Service (porque el Service depende del Repository).
+---
+11. IESA.TC.Invoices.V2\Migrations\20260508063209_AddRecurringInvoiceItemAdditionalData.cs (NUEVO)
+
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace IESA.TC.Invoices.V2.Migrations
+{
+    public partial class AddRecurringInvoiceItemAdditionalData : Migration
+    {
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "RecurringInvoiceItemAdditionalData",
+                columns: table => new
+                {
+                    RecurringInvoiceItemAdditionalDataID = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ManagerUID = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    RecurringInvoiceItemID = table.Column<long>(type: "bigint", nullable: false),
+                    IsServiceFee = table.Column<bool>(type: "bit", nullable: false),
+                    IsBillable = table.Column<bool>(type: "bit", nullable: false),
+                    IsRentReview = table.Column<bool>(type: "bit", nullable: false),
+                    RecurringInvoiceItemAdditionalDataUID = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    InactiveAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedByUserUID = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ModifiedByUserUID = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    InactiveByUserUID = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RecurringInvoiceItemAdditionalData", x => x.RecurringInvoiceItemAdditionalDataID);
+                    table.ForeignKey(
+                        name: "FK_RecurringInvoiceItemAdditionalData_RecurringInvoiceItem_RecurringInvoiceItemID",
+                        column: x => x.RecurringInvoiceItemID,
+                        principalTable: "RecurringInvoiceItem",
+                        principalColumn: "RecurringInvoiceItemID");
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RecurringInvoiceItemAdditionalData_RecurringInvoiceItemAdditionalDataUID",
+                table: "RecurringInvoiceItemAdditionalData",
+                column: "RecurringInvoiceItemAdditionalDataUID",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RecurringInvoiceItemAdditionalData_RecurringInvoiceItemID",
+                table: "RecurringInvoiceItemAdditionalData",
+                column: "RecurringInvoiceItemID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RecurringInvoiceItemAdditionalDataManagerUID",
+                table: "RecurringInvoiceItemAdditionalData",
+                columns: new[] { "ManagerUID", "IsActive" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RecurringInvoiceItemAdditionalDataManagerUIDItemID",
+                table: "RecurringInvoiceItemAdditionalData",
+                columns: new[] { "ManagerUID", "RecurringInvoiceItemID", "IsActive" });
+        }
+
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "RecurringInvoiceItemAdditionalData");
+        }
+    }
+} 
+
+EXPLICACIÓN:
+•	Se generó con: dotnet ef migrations add AddRecurringInvoiceItemAdditionalData
+•	Up(): Crea la tabla con todos los campos, la PK autoincremental, la FK hacia RecurringInvoiceItem, y los 4 índices.
+•	Down(): Elimina la tabla completa. Se ejecuta si se revierte la migración (dotnet ef migrations remove).
+•	La FK no tiene ON DELETE CASCADE (por defecto es NO ACTION), lo que significa que no puedes borrar un RecurringInvoiceItem si tiene registros en esta tabla. Esto es intencional para proteger los datos.
+•	Los campos de auditoría (CreatedAt, ModifiedAt, etc.) los genera automáticamente EF Core al leer la herencia de IESAAuditableEntity.
+---
+12. IESA.TC.Invoices.V2\Infrastructure\RecurringInvoice\RecurringInvoiceService.cs (MODIFICADO)
+CAMBIOS EN EL CONSTRUCTOR:
+Se añadió el parámetro:
+
+IRecurringInvoiceItemAdditionalDataService recurringInvoiceItemAdditionalDataService
+
+Y el campo:
+private readonly IRecurringInvoiceItemAdditionalDataService _recurringInvoiceItemAdditionalDataService;
+
+Y la asignación:
+
+_recurringInvoiceItemAdditionalDataService = recurringInvoiceItemAdditionalDataService;
+
+EXPLICACIÓN: Inyección de dependencias. El framework de ASP.NET Core resuelve automáticamente este parámetro porque lo registramos en ServiceInitialization.cs.
+---
+CAMBIOS EN SaveRecurringInvoiceWithItemsAsync (POST/PUT):
+Línea añadida después del mapper:
+
+
+recurringInvoiceDTE.ManagerUID = _credential.uidGestor;
+
+EXPLICACIÓN: El mapper (AutoMapper) copia los campos del DTO al DTE, pero el DTO NO tiene ManagerUID (porque no es un campo que el frontend envíe). Por eso se queda en null tras el mapeo. Si no lo asignamos manualmente, el INSERT falla con "Cannot insert the value NULL into column 'ManagerUID'". Esto era un bug preexistente que no se manifestaba antes porque probablemente no se estaba creando RecurringInvoices nuevas desde esta API.
+---
+Bloque añadido después de SaveRecurringInvoiceItemsAsync:
+
+foreach (var itemDTO in recurringInvoiceWithItemsDTO.RecurringInvoiceItems)
+{
+    var itemDTE = recurringInvoiceItemDTEs.FirstOrDefault(x => x.RecurringInvoiceItemID != 0 && x.Order == itemDTO.Order);
+    if (itemDTE != null)
+    {
+        var existingAdditionalData = await _recurringInvoiceItemAdditionalDataService.GetByRecurringInvoiceItemIDAsync(itemDTE.RecurringInvoiceItemID);
+        var additionalDataDTE = existingAdditionalData ?? new RecurringInvoiceItemAdditionalDataDTE();
+        additionalDataDTE.RecurringInvoiceItemID = itemDTE.RecurringInvoiceItemID;
+        additionalDataDTE.IsServiceFee = itemDTO.IsServiceFee;
+        additionalDataDTE.IsBillable = itemDTO.IsBillable;
+        additionalDataDTE.IsRentReview = itemDTO.IsRentReview;
+        await _recurringInvoiceItemAdditionalDataService.SaveRecurringInvoiceItemAdditionalDataAsync(additionalDataDTE);
+    }
+}
+
+EXPLICACIÓN LÍNEA POR LÍNEA:
+1.	foreach (var itemDTO in recurringInvoiceWithItemsDTO.RecurringInvoiceItems) — Itera sobre cada item que envió el frontend.
+2.	var itemDTE = recurringInvoiceItemDTEs.FirstOrDefault(x => x.RecurringInvoiceItemID != 0 && x.Order == itemDTO.Order) — Busca el item ya persistido (que tiene ID asignado por la BD) que coincida en Order con el del frontend. El Order es único dentro de una factura.
+3.	if (itemDTE != null) — Solo procesa si encontró el item persistido (protección contra items que no se guardaron por algún error).
+4.	var existingAdditionalData = await _recurringInvoiceItemAdditionalDataService.GetByRecurringInvoiceItemIDAsync(itemDTE.RecurringInvoiceItemID) — Busca si ya existe un registro en RecurringInvoiceItemAdditionalData para este item. Devuelve null si no existe.
+5.	var additionalDataDTE = existingAdditionalData ?? new RecurringInvoiceItemAdditionalDataDTE() — Si existe (PUT/edición), lo reutiliza para hacer UPDATE. Si no existe (POST/creación), crea uno nuevo para hacer INSERT.
+6.	additionalDataDTE.RecurringInvoiceItemID = itemDTE.RecurringInvoiceItemID — Asigna la FK.
+7.	additionalDataDTE.IsServiceFee = itemDTO.IsServiceFee — Copia el valor que envió el frontend.
+8.	additionalDataDTE.IsBillable = itemDTO.IsBillable — Ídem.
+9.	additionalDataDTE.IsRentReview = itemDTO.IsRentReview — Ídem.
+10.	await _recurringInvoiceItemAdditionalDataService.SaveRecurringInvoiceItemAdditionalDataAsync(additionalDataDTE) — Persiste. El servicio asigna ManagerUID y llama a PersistAsync que decide si INSERT o UPDATE según el ID.
+---
+CAMBIOS EN GetRecurringInvoiceWithItemsDTOsAsync (GET):
+Bloque añadido dentro del foreach de items:
+
+foreach (var item in resDTO)
+{
+    var additionalData = await _recurringInvoiceItemAdditionalDataService.GetByRecurringInvoiceItemIDAsync(item.RecurringInvoiceItemID);
+    item.IsServiceFee = additionalData?.IsServiceFee ?? false;
+    item.IsBillable = additionalData?.IsBillable ?? false;
+    item.IsRentReview = additionalData?.IsRentReview ?? false;
+}
+
+EXPLICACIÓN:
+•	Para cada item de la factura periódica, busca su registro en RecurringInvoiceItemAdditionalData.
+•	Si existe (additionalData != null): usa los valores guardados.
+•	Si NO existe (additionalData == null): el operador ?? asigna false. Esto cumple el requisito del Redmine: "No puede fallar si esos campos no están".
+•	Esto es el equivalente funcional del LEFT JOIN que menciona el Redmine, pero implementado a nivel de aplicación en vez de SQL.
+---
+FLUJO COMPLETO
+POST (crear nueva factura periódica):
+1.	Frontend envía JSON con recurringInvoiceItems que incluyen isServiceFee, isBillable, isRentReview.
+2.	Se valida participante, empresa, NIF, dirección.
+3.	Se calcula importes de los items.
+4.	Se persiste RecurringInvoice (con ManagerUID asignado).
+5.	Se persisten los RecurringInvoiceItems.
+6.	Para cada item: se crea un registro en RecurringInvoiceItemAdditionalData con los 3 campos booleanos.
+7.	Se procesan los items a eliminar.
+GET (obtener facturas periódicas para facturación):
+1.	Se obtienen las facturas periódicas del repositorio.
+2.	Para cada factura, se obtienen sus items.
+3.	Para cada item, se busca su registro adicional y se enriquece el DTO con isServiceFee, isBillable, isRentReview (default false si no existe).
+4.	Se devuelve al frontend con los campos completos.
+PUT (editar factura periódica existente):
+1.	Mismo flujo que POST pero RecurringInvoiceID != 0.
+2.	Se obtiene el RecurringInvoice existente de BD.
+3.	Al guardar AdditionalData: busca el existente (UPDATE) en vez de crear nuevo (INSERT).
+---
+PROBLEMA ENCONTRADO Y SOLUCIONADO
+Error: "Cannot insert the value NULL into column 'ManagerUID', table 'invoices-v2-test.dbo.RecurringInvoice'"
+Causa: AutoMapper copiaba los campos del DTO al DTE, pero el DTO no tiene ManagerUID. El DTE quedaba con ManagerUID = null (string.Empty se sobreescribía por el mapper).
+Solución: Añadir recurringInvoiceDTE.ManagerUID = _credential.uidGestor; DESPUÉS del mapper.

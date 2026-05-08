@@ -1,8 +1,34 @@
 [
   {
     "ContainingType": "WebPersonal.BackEnd.Controllers.PerfilPersonalController",
+    "Method": "Post",
+    "RelativePath": "api/PerfilPersonal",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "perfilPersonal",
+        "Type": "WebPersonal.BackEnd.Controllers.PerfilPersonalDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.String",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "WebPersonal.BackEnd.Controllers.PerfilPersonalController",
     "Method": "Get",
-    "RelativePath": "LeerPerfil/{id}",
+    "RelativePath": "api/PerfilPersonal/{id}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

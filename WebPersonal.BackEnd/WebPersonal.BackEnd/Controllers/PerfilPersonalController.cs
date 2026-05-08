@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebPersonal.BackEnd.Controllers
 {
-  //  [Route("api/[controller]")]
+    [Route("api/[controller]")]
     [ApiController]
     public class PerfilPersonalController : ControllerBase
     {
-        [HttpGet("LeerPerfil/{id}")]
+        [HttpGet("{id}")]
        
         public string Get(int id)
         {
@@ -20,7 +20,8 @@ namespace WebPersonal.BackEnd.Controllers
                 };  
         }
 
-       public string Post(PerfilPersonalDto perfilPersonal)
+        [HttpPost]
+        public string Post(PerfilPersonalDto perfilPersonal)
         {
 
             //Guardar perfil en la base de datos.

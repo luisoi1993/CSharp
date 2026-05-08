@@ -33,3 +33,4 @@ D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\WebPersonal.BackEnd\WebPersonal
 D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\WebPersonal.BackEnd\WebPersonal.BackEnd\obj\Debug\net6.0\WebPersonal.BackEnd.pdb
 D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\WebPersonal.BackEnd\WebPersonal.BackEnd\obj\Debug\net6.0\WebPersonal.BackEnd.genruntimeconfig.cache
 D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\WebPersonal.BackEnd\WebPersonal.BackEnd\obj\Debug\net6.0\ref\WebPersonal.BackEnd.dll
+D:\Users\ext.luis.aguado\Documents\GitHub\CSharp\WebPersonal.BackEnd\WebPersonal.BackEnd\obj\Debug\net6.0\WebPersonal.BackEnd.sourcelink.json
